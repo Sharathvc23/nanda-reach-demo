@@ -245,7 +245,9 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
         entry.trace = r.trace;
         entry.card_version = r.card?.version ?? null;
         if (!r.target) throw new Error("could not resolve the locator to an inbox");
-        const sent = await inkbox.send({ address: config.address, apiKey: config.apiKey }, { to: r.target.agent.inbox.address, subject, body_text: bodyText }, entry.id);
+        // A unique offer reference per send: InkBox holds a third identical body to the same mailbox until it gets a reply.
+        const uniqueBody = `${bodyText}\n\nOffer ref ${entry.id.replace(/^promo_/, "").toUpperCase()} · ${new Date(entry.at).toUTCString()}`;
+        const sent = await inkbox.send({ address: config.address, apiKey: config.apiKey }, { to: r.target.agent.inbox.address, subject, body_text: uniqueBody }, entry.id);
         entry.delivered_to = { agent: r.target.agent.id, address: r.target.agent.inbox.address };
         entry.trace.push(`InkBox: sent from ${config.address} to ${r.target.agent.inbox.address}${sent.id ? ` (id ${sent.id})` : ""}`);
       } catch (e) {
