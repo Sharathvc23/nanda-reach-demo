@@ -194,6 +194,16 @@ describe("the three acts", () => {
     await client.close();
   });
 
+  it("act 4: John routes travel back to Muse; Wajo stays on the card", async () => {
+    const r = await call(mm.publicBaseUrl, "POST", "/chat", { message: "Route travel messages back to Muse. Keep Wajo on my card." });
+    expect(r.body.steps.map((s: any) => s.tool)).toEqual(["set_routing", "get_my_card"]);
+    const card = await call(mm.publicBaseUrl, "GET", "/.well-known/agent-card.json");
+    expect(card.body.routing).toEqual([expect.objectContaining({ match: "*", deliver_to: "muse" })]);
+    expect(card.body.agents.map((a: any) => a.id)).toEqual(["muse", "wajo"]);
+    const send = await call(t26.publicBaseUrl, "POST", "/promo", { subject: "Back to Muse" });
+    expect(send.body.results[0].delivered_to.agent).toBe("muse");
+  });
+
   it("admin endpoints need the token", async () => {
     expect((await fetch(`${t26.publicBaseUrl}/promo`, { method: "POST" })).status).toBe(401);
     expect((await fetch(`${mm.publicBaseUrl}/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: "hi" }) })).status).toBe(401);

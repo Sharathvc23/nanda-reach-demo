@@ -102,6 +102,15 @@ export class ScriptedBrain implements Brain {
     const urlMatch = text.match(/https?:\/\/[^\s"']+/i);
     const addrMatch = text.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
 
+    // Routing back: "route travel back to Muse", "send everything to Muse again".
+    if (/\b(route|routing|send|deliver)\b/.test(lower) && /\bmuse\b/.test(lower) && /\b(back|again|to muse|via muse)\b/.test(lower)) {
+      const keepWajo = !/\b(remove|drop|delete)\b.*\bwajo\b/.test(lower);
+      if (!keepWajo) tools.removeAgent("wajo");
+      tools.setRouting([{ match: "*", deliver_to: "muse", note: `${this.config.owner}: everything back to Muse` }]);
+      const version = (JSON.parse(tools.getMyCard()) as { version: string }).version;
+      return `Done. Everything routes to me on Muse again${keepWajo ? ", and Wajo stays on the card without any topics" : ", and Wajo is off the card"}. The card is now version ${version}. Travel26 still holds only your locator, so its next message comes to Muse.`;
+    }
+
     if (/\b(route|routing|via|instead of)\b/.test(lower) && /\bwajo\b/.test(lower)) {
       const address = addrMatch?.[0] ?? this.config.wajo.address;
       const topic = lower.match(/\b(travel|billing|shopping|news|health|work)\b/)?.[1] ?? "travel";
