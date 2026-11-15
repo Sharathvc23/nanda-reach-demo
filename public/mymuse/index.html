@@ -5,16 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>mymuse Personal Agent</title>
 <style>
-  :root { --bg:#f6f4ef; --panel:#fff; --ink:#1d1d1b; --muted:#6b6a66; --line:#e3e0d8; --accent:#5a4fcf; --accent-ink:#fff; --warn:#b4512b; --ok:#2d7a3a; --chip:#efeef9; --muse:#5a4fcf; --wajo:#c2541f; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#161614; --panel:#1f1f1c; --ink:#ecebe6; --muted:#a09e97; --line:#33322e; --accent:#9b93f2; --accent-ink:#141230; --warn:#e3875f; --ok:#6fc07c; --chip:#262538; --muse:#9b93f2; --wajo:#f0905e; } }
-  :root[data-theme="dark"] { --bg:#161614; --panel:#1f1f1c; --ink:#ecebe6; --muted:#a09e97; --line:#33322e; --accent:#9b93f2; --accent-ink:#141230; --warn:#e3875f; --ok:#6fc07c; --chip:#262538; --muse:#9b93f2; --wajo:#f0905e; }
+  :root { --bg:#f5f7fa; --panel:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --accent-ink:#ffffff; --warn:#c2410c; --ok:#15803d; --chip:#e8effd; --muse:#7c3aed; --wajo:#ea580c; }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
   header, .status, main, footer { max-width:1400px; margin:0 auto; padding:0 16px; }
   header { padding-top:20px; } h1 { margin:0 0 4px; font-size:22px; font-weight:650; } header p { margin:0 0 10px; color:var(--muted); }
   main { display:grid; grid-template-columns:minmax(340px,1.4fr) repeat(auto-fit,minmax(280px,1fr)); gap:12px; padding-bottom:24px; }
   @media (max-width: 760px) { main { grid-template-columns:1fr; } }
-  section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; min-height:220px; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 1px 2px rgba(0,0,0,.04); padding:14px 16px; min-height:220px; }
   h2 { margin:0 0 2px; font-size:15px; font-weight:650; display:flex; align-items:center; gap:8px; } .sub { color:var(--muted); font-weight:400; font-size:13px; }
   .dot { width:10px; height:10px; border-radius:50%; display:inline-block; } .dot.muse { background:var(--muse);} .dot.wajo { background:var(--wajo);} .dot.card { background:var(--muted);}
   .addr { color:var(--muted); font-size:12.5px; word-break:break-all; margin-bottom:10px; }
