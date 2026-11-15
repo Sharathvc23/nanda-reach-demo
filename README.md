@@ -46,6 +46,22 @@ same three intents, which is what the tests use. Meta's Muse looks for Poppy on 
 visits, so Travel26 works with real Muse as it is; mymuse exists because Muse has no API to drive
 from a demo.
 
+## With a real Muse agent
+
+Meta's Muse speaks Poppy natively, so it can play John's agent instead of mymuse. mymuse then only hosts
+John's card. Three steps for the person who runs Muse:
+
+1. **Point the NANDA Index entry at the card.** Register the Muse agent through
+   https://my.nandaindex.org as usual, then set its entry's `registry_url` to
+   `https://<mymuse host>/.well-known/agent-card.json`, and set `JOHN_LOCATOR` and `MYMUSE_ADDRESS` on the
+   mymuse service to that agent's locator and InkBox address.
+2. **Shop.** Tell Muse to find flights at `https://<travel26 host>`. Muse finds `poppy.json`, opens a Session and
+   calls the MCP API. Then tell it: "share my NANDA locator with Travel26 so they can send me offers". Muse calls
+   the `share_nanda_locator` tool. Travel26 now holds the locator and nothing else.
+3. **Move.** Add `https://<mymuse host>/mcp` to Muse as a custom connector (Streamable HTTP, API key = the admin
+   token). Tell Muse: "add my Wajo agent at <address> to my card and route travel there". Muse calls `add_agent`
+   and `set_routing`. Travel26's next promotion lands in Wajo.
+
 ## Run it
 
 Requirements: Node 22.
