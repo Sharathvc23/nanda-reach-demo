@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, statSync } from "node:
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const john = (process.argv[2] ?? "https://mymuse-production.up.railway.app").replace(/\/+$/, "");
+const john = (process.argv[2] ?? "https://mymuse.stellarminds.ai").replace(/\/+$/, "");
 const merchant = (process.argv[3] ?? "https://travel26-production.up.railway.app").replace(/\/+$/, "");
 const outDir = process.argv[4] ?? "recordings";
 const envFile = existsSync(".env.live") ? Object.fromEntries(readFileSync(".env.live", "utf8").split(/\r?\n/).filter((l) => l.includes("=")).map((l) => { const i = l.indexOf("="); return [l.slice(0, i), l.slice(i + 1)]; })) : {};
@@ -23,6 +23,7 @@ const log = (m) => console.log(new Date().toISOString().slice(11, 19), m);
 
 await page.goto(pathToFileURL(resolve("scripts/stage.html")).href);
 await page.evaluate(([l, r]) => window.stage.load(l, r), [john, merchant]);
+await page.evaluate(() => window.stage.title("IETF · NandaIndex demo 2026"));
 const L = page.frameLocator("#lf");
 const R = page.frameLocator("#rf");
 const caption = (step, text, sub, side) => page.evaluate((a) => window.stage.caption(...a), [step, text, sub, side]);
@@ -110,6 +111,6 @@ await sleep(6000);
 const video = page.video();
 await context.close();
 await browser.close();
-const dest = join(outDir, "reach-john-demo-stage.webm");
+const dest = join(outDir, "ietf-nandaindex-demo-2026.webm");
 renameSync(await video.path(), dest);
 log(`saved ${dest} (${(statSync(dest).size / 1e6).toFixed(1)} MB)`);

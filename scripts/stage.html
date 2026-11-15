@@ -7,6 +7,7 @@
   :root { --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --merchant:#0d9488; }
   html, body { margin:0; height:100%; background:#eef1f5; font:15px/1.4 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:var(--ink); }
   .cap { height:74px; display:flex; align-items:center; gap:16px; padding:0 22px; background:#ffffff; border-bottom:1px solid var(--line); }
+  .cap .brand { flex:none; font-weight:700; font-size:14px; letter-spacing:.02em; color:var(--ink); padding-right:14px; border-right:1px solid var(--line); }
   .cap .step { flex:none; min-width:92px; text-align:center; font-weight:700; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:#fff; background:var(--accent); border-radius:999px; padding:6px 12px; }
   .cap .step.merchant { background:var(--merchant); }
   .cap .text { font-size:19px; font-weight:600; line-height:1.3; }
@@ -22,13 +23,14 @@
 </style>
 </head>
 <body>
-<div class="cap"><div class="step" id="step">Start</div><div class="text" id="text">John and a merchant that has never heard of him<small>Two real services, the live NANDA Index, and real InkBox mailboxes.</small></div></div>
+<div class="cap"><div class="brand" id="brand"></div><div class="step" id="step">Start</div><div class="text" id="text">John and a merchant that has never heard of him<small>Two real services, the live NANDA Index, and real InkBox mailboxes.</small></div></div>
 <div class="frames">
   <div class="pane" id="left"><div class="bar"><b>John's side</b> · his agent, his card, his inboxes<span class="url" id="lurl"></span></div><iframe id="lf" src="about:blank"></iframe></div>
   <div class="pane merchant" id="right"><div class="bar"><b>Travel26's side</b> · what the merchant sees<span class="url" id="rurl"></span></div><iframe id="rf" src="about:blank"></iframe></div>
 </div>
 <script>
   window.stage = {
+    title(t) { document.getElementById("brand").textContent = t; },
     load(left, right) { document.getElementById("lf").src = left; document.getElementById("rf").src = right; document.getElementById("lurl").textContent = left.replace(/^https?:\/\//, ""); document.getElementById("rurl").textContent = right.replace(/^https?:\/\//, ""); },
     caption(step, text, sub, side) {
       const s = document.getElementById("step"); s.textContent = step; s.className = "step" + (side === "merchant" ? " merchant" : "");

@@ -11,7 +11,7 @@ import { AgentTools } from "./tools.js";
 import { makeBrain } from "./brain.js";
 import { PoppyClient } from "./poppy-client.js";
 import { registerCardMcp } from "./mcp.js";
-import { registerAttackControls, signedCard } from "./attack.js";
+import { registerMoveControls } from "./move.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -19,7 +19,7 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
   const store = new JsonStore<MymuseState>(config.dataDir, "mymuse.json", () => freshState(config));
   const inkbox = new InkboxClient(config.inkboxBaseUrl);
   const poppy = new PoppyClient(config, store);
-  const root = await poppy.rootKey();
+  await poppy.rootKey();
   const brain = makeBrain(config);
   const app = Fastify({ logger: process.env.NODE_ENV !== "test" });
   const admin = requireAdmin(config.adminToken);
@@ -31,12 +31,12 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
   const cardAt = (path: string) => async (_req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) => {
     const current = store.state.card_path ?? DEFAULT_CARD_PATH;
     if (path !== current) return reply.code(410).send({ error: "gone", moved_to: `${config.publicBaseUrl}${current}` });
-    return signedCard(config, store, root);
+    return buildCard(config, store.state);
   };
   app.get(DEFAULT_CARD_PATH, cardAt(DEFAULT_CARD_PATH));
   app.get(MOVED_CARD_PATH, cardAt(MOVED_CARD_PATH));
-  app.get("/cards/john", async () => signedCard(config, store, root));
-  registerAttackControls(app, { config, store, root });
+  app.get("/cards/john", async () => buildCard(config, store.state));
+  registerMoveControls(app, { config, store });
 
   // Poppy Personal Agent identity (spec 4.1).
   app.get("/poppy/client.json", async (_req, reply) => reply.header("cache-control", "public, max-age=300").send(await poppy.clientMetadata()));
@@ -116,12 +116,6 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
       return reply.code(502).send({ url: config.travel26Url, error: (e as Error).message, known_agents: [], promo_log: [] });
     }
   });
-  app.get("/merchant/corroborate", { preHandler: admin }, async (req, reply) => {
-    const headers: Record<string, string> = {};
-    if (req.headers.authorization) headers.authorization = req.headers.authorization;
-    const r = await merchant("/corroborate", { headers }).catch((e: Error) => ({ status: 502, body: { error: e.message } }));
-    return reply.code(r.status).send(r.body);
-  });
   app.post<{ Body: { subject?: string; body_text?: string } }>("/merchant/promo", { preHandler: admin }, async (req, reply) => {
     const headers: Record<string, string> = { "content-type": "application/json" };
     if (req.headers.authorization) headers.authorization = req.headers.authorization;
@@ -138,7 +132,6 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
   app.get("/state", async () => ({
     card: buildCard(config, store.state),
     chat: store.state.chat,
-    tamper: store.state.tamper,
     card_path: store.state.card_path ?? DEFAULT_CARD_PATH,
     companies: Object.fromEntries(Object.entries(store.state.companies).map(([aud, c]) => [aud, { user_id: c.sub, session_id: c.sid, share_locator: c.share_locator }])),
   }));

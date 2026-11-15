@@ -12,8 +12,6 @@ import { InkboxClient } from "../shared/inkbox.js";
 import { LOCATOR } from "../shared/env.js";
 import { PoppyError, POPPY_VERSION, REACH_EXTENSION, REACH_VERSION, SessionVerifier, audienceOf, type VerifiedSession } from "../shared/poppy.js";
 import { resolveLocator } from "./resolver.js";
-import { corroborateLocator } from "./corroborate.js";
-import { describeReport, type CorroborationReport } from "../shared/corroborate.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -47,7 +45,6 @@ export interface PromoDelivery {
   delivered_to: { agent: string; address: string } | null;
   error: string | null;
   trace: string[];
-  verdict?: string;
   /** The card declined this topic. */
   declined?: string | null;
   /** What happened to a merchant that saved the card URL instead of the locator. */
@@ -236,16 +233,6 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
     does_not_store: ["agent_card", "inbox_address", "endpoint_url"],
   }));
 
-  const lastReports = new Map<string, CorroborationReport>();
-  /** Corroborate a locator now, without sending. Defaults to the first locator Travel26 holds. */
-  app.get<{ Querystring: { locator?: string } }>("/corroborate", { preHandler: admin }, async (req, reply) => {
-    const known = req.query.locator ? store.state.known_agents.find((k) => k.nanda_locator === req.query.locator) : store.state.known_agents.find((k) => k.nanda_locator);
-    if (!known?.nanda_locator) return reply.code(404).send({ error: "no locator held" });
-    const c = await corroborateLocator(config, known, ["travel", "promotion"]);
-    lastReports.set(known.nanda_locator, c.report);
-    return { ...c.report, card_url: c.card_url, target: c.target, last_send: store.state.promo_log.find((d) => d.locator === known!.nanda_locator) ?? null };
-  });
-
   app.get("/admin/check", { preHandler: admin }, async () => ({ ok: true }));
   app.get("/known-agents", async () => store.state.known_agents);
 
@@ -305,21 +292,9 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
           continue;
         }
         sentLocators.add(known.nanda_locator);
-        // Several sources, one question. Send only on agreement.
-        const c = await corroborateLocator(config, known, topics);
-        lastReports.set(known.nanda_locator, c.report);
+        const c = await resolveLocator(config.indexBaseUrl, known.nanda_locator, topics);
         entry.card_version = c.card?.version ?? null;
-        // The public trace shows the hops; the source-by-source report stays on the admin endpoint.
-        const indexView = c.report.sources.find((s) => s.source === "nanda-index");
-        entry.trace.push(`Index: GET ${config.indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(known.nanda_locator)}`);
-        entry.trace.push(`Index: ${indexView?.status === "ok" ? `entry active, card ${c.card_url}` : `entry ${indexView?.detail ?? "not found"}`}`);
-        if (c.card) entry.trace.push(`Card: GET ${c.card_url}`, `Card: version ${c.card.version}, ${c.card.agents?.length ?? 0} agent(s), ${c.card.routing?.length ?? 0} rule(s)`);
-        if (c.report.verdict !== "AGREE") {
-          const kinds = c.report.findings.map((f) => f.kind).join(", ") || "not enough sources";
-          entry.trace.push(`Verification: failed (${kinds})`);
-          throw new Error(`held: the locator could not be verified (${kinds})`);
-        }
-        entry.trace.push("Verification: passed");
+        entry.trace.push(...c.trace.filter((l) => !/^Route:/.test(l)));
         // What a merchant that saved the URL would get right now.
         if (known.saved_card_url) {
           const n = await fetch(known.saved_card_url, { headers: { accept: "application/json" }, redirect: "manual", signal: AbortSignal.timeout(8_000) }).then((res) => res.status).catch(() => null);
@@ -327,11 +302,11 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
           entry.trace.push(`Saved-URL merchant: GET ${known.saved_card_url} -> ${n ?? "unreachable"}${n === 200 ? "" : " (would have lost John)"}`);
         }
         if (c.declined) {
-          entry.declined = c.declined;
-          entry.trace.push(`Route: topics [${topics.join(", ")}] -> rule "${c.declined}" -> declined by the card`);
-          throw new Error(`held: the card declines ${c.declined}`);
+          entry.declined = c.declined.match;
+          entry.trace.push(`Route: topics [${topics.join(", ")}] -> rule "${c.declined.match}" -> declined by the card`);
+          throw new Error(`held: the card declines ${c.declined.match}`);
         }
-        const r = { target: c.target ? { agent: { id: c.target.agent, name: c.target.name, inbox: { address: c.target.address } }, rule: { match: c.target.rule } } : null };
+        const r = c;
         if (!r.target) throw new Error("could not resolve the locator to an inbox");
         entry.trace.push(`Route: topics [${topics.join(", ")}] -> rule "${r.target.rule.match}" -> ${r.target.agent.name} <${r.target.agent.inbox.address}>`);
         // A unique offer reference per send: InkBox holds a third identical body to the same mailbox until it gets a reply.

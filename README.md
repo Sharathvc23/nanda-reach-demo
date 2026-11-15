@@ -12,8 +12,14 @@ spec. This demo fills that gap with the NANDA Index.
 
 ## Demo
 
-Video: see `docs/demo/` (added after the next recording). Live: [John's side](https://mymuse.stellarminds.ai) and
-[Travel26's desk](https://travel26-production.up.railway.app).
+**IETF NandaIndex demo 2026**, 80 seconds: [MP4](docs/demo/ietf-nandaindex-demo-2026.mp4) · [WebM](docs/demo/ietf-nandaindex-demo-2026.webm)
+
+[![IETF NandaIndex demo 2026](docs/demo/poster.png)](docs/demo/ietf-nandaindex-demo-2026.mp4)
+
+John's agent shops at Travel26 over Poppy and shares only his NANDA locator; Travel26's first promotion lands in Muse;
+John reroutes travel to Wajo by editing his card; Travel26's next promotion, to the same locator, lands in Wajo; John
+declines promotions and Travel26 holds; John moves his card and a merchant that saved the URL loses him while Travel26
+does not. Live: [John's side](https://mymuse.stellarminds.ai) and [Travel26's desk](https://travel26-production.up.railway.app).
 
 ## The story, in three acts
 

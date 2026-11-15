@@ -98,9 +98,6 @@ describe("moving the card", () => {
     expect((await fetch(`${mm.publicBaseUrl}/john/v2/agent-card.json`)).status).toBe(200);
     const status = (await call(mm.publicBaseUrl, "GET", "/index/status")).body;
     expect(status.moved).toBe(true);
-    expect(status.hijacked).toBe(false);
-    const corr = (await call(t26.publicBaseUrl, "GET", "/corroborate")).body;
-    expect(corr.verdict).toBe("AGREE");
     const d = await send("After the move");
     expect(d.naive).toMatchObject({ ok: false, status: 410 });
     expect(d.delivered_to.agent).toBe("wajo");
@@ -110,6 +107,5 @@ describe("moving the card", () => {
   it("moving back restores the original URL", async () => {
     await call(mm.publicBaseUrl, "POST", "/card/move-back");
     expect((await fetch(`${mm.publicBaseUrl}/.well-known/agent-card.json`)).status).toBe(200);
-    expect((await call(t26.publicBaseUrl, "GET", "/corroborate")).body.verdict).toBe("AGREE");
   });
 });

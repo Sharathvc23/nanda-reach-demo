@@ -130,7 +130,6 @@ describe("the three acts", () => {
     expect(d.card_version).toBe("1");
     expect(d.delivered_to.agent).toBe("muse");
     expect(d.trace.some((t: string) => t.startsWith("Index: GET"))).toBe(true);
-    expect(d.trace.join("\n")).not.toMatch(/corroborat/i);
     const muse = await call(mm.publicBaseUrl, "GET", "/inbox/muse");
     const wajo = await call(mm.publicBaseUrl, "GET", "/inbox/wajo");
     expect(muse.body.items).toHaveLength(1);

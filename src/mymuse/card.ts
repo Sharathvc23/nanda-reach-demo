@@ -34,8 +34,6 @@ export interface MymuseState {
   chat: ChatTurn[];
   keys: { root: JWK | null };
   companies: Record<string, CompanyState>;
-  /** Attack simulation: the host serves a card whose first inbox was swapped after signing. */
-  tamper: { inbox_address: string } | null;
   /** Where the card lives on this host. John can move it; the Index entry follows, merchants that saved the URL do not. */
   card_path: string;
 }
@@ -52,7 +50,6 @@ export function freshState(config: MymuseConfig): MymuseState {
     chat: [],
     keys: { root: null },
     companies: {},
-    tamper: null,
     card_path: DEFAULT_CARD_PATH,
   };
 }
