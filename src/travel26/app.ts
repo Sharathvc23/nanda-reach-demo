@@ -237,10 +237,18 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
       ].join("\n");
     const topics = req.body?.topics ?? ["travel", "promotion"];
     const results: PromoDelivery[] = [];
+    // One message per person: several Poppy sessions (pseudonymous user ids) can share one locator.
+    const sentLocators = new Set<string>();
     for (const known of store.state.known_agents) {
       const entry: PromoDelivery = { id: newId("promo"), at: new Date().toISOString(), client_name: known.client_name, sub: known.sub, locator: known.nanda_locator, subject, card_version: null, delivered_to: null, error: null, trace: [] };
       try {
         if (!known.nanda_locator) throw new Error("no NANDA locator: Poppy alone gives Travel26 no way to reach this person");
+        if (sentLocators.has(known.nanda_locator)) {
+          entry.trace.push("Skipped: same locator already reached in this send (another session of the same person)");
+          results.push(entry);
+          continue;
+        }
+        sentLocators.add(known.nanda_locator);
         const r = await resolveLocator(config.indexBaseUrl, known.nanda_locator, topics);
         entry.trace = r.trace;
         entry.card_version = r.card?.version ?? null;
