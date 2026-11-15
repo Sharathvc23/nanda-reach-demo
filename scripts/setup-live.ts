@@ -2,7 +2,7 @@
  * One-time setup for the live demo: three InkBox mailboxes (John on Muse, John on Wajo,
  * Travel26) and John's entry in the NANDA Index pointing at the card this service hosts.
  *
- * Every step is its own command and the script keeps its progress in data/live-setup.json, so a
+ * Every step is its own command and the script keeps its progress in .live/setup.json, so a
  * step can be repeated safely. Secrets are written to that file and to .env.live only; the
  * script never prints an API key, password or token.
  *
@@ -23,7 +23,8 @@ import { randomBytes } from "node:crypto";
 
 const INK = process.env.INKBOX_BASE_URL?.replace(/\/+$/, "") ?? "https://inkbox.ai/api/v1";
 const NANDA = process.env.INDEX_BASE_URL?.replace(/\/+$/, "") ?? "https://api.nandaindex.org";
-const STATE_FILE = "data/live-setup.json";
+// Kept outside data/ on purpose: data/ is the services' scratch state and gets wiped; this must not be.
+const STATE_FILE = ".live/setup.json";
 
 type BoxName = "muse" | "wajo" | "travel26";
 interface Box {
@@ -54,7 +55,7 @@ function loadState(): SetupState {
   return JSON.parse(readFileSync(STATE_FILE, "utf8")) as SetupState;
 }
 function saveState(s: SetupState): void {
-  mkdirSync("data", { recursive: true });
+  mkdirSync(".live", { recursive: true });
   writeFileSync(STATE_FILE, JSON.stringify(s, null, 2));
 }
 

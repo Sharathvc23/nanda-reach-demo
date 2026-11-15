@@ -61,7 +61,7 @@ Open http://localhost:8096 (John's side) and http://localhost:8095 (the merchant
 ## Live setup
 
 Live mode is the default and needs the environment in `.env.example`. `scripts/setup-live.ts`
-creates everything, one command per step, keeping its progress in `data/live-setup.json`:
+creates everything, one command per step, keeping its progress in `.live/setup.json`:
 
 ```bash
 npm run setup -- signup muse --human-email <throwaway@yourdomain> --handle <handle>
