@@ -69,9 +69,9 @@ describe("corroboration", () => {
     expect(r.sources.map((s: any) => s.source).sort()).toEqual(["card", "inkbox", "nanda-index", "poppy-identity", "travel26"]);
     expect(r.sources.every((s: any) => s.status === "ok")).toBe(true);
     const d = await send("Baseline");
-    expect(d.verdict).toBe("AGREE");
     expect(d.delivered_to.agent).toBe("muse");
-    expect(d.trace.some((t: string) => t.startsWith("Corroboration: AGREE"))).toBe(true);
+    expect(d.trace).toContain("Verification: passed");
+    expect(d.trace.join("\n")).not.toMatch(/corroborat/i);
   });
 
   it("attack 1: a tampered card host is caught by the signature and the send is held", async () => {
@@ -83,9 +83,10 @@ describe("corroboration", () => {
     expect(r.findings.map((f: any) => f.kind)).toContain("key");
     const d = await send("Tampered");
     expect(d.delivered_to).toBeNull();
-    expect(d.error).toMatch(/held: corroboration DIVERGENT/);
+    // The tampered inbox is the attacker's, which also has no InkBox card, so an omission rides along with the key finding.
+    expect(d.error).toMatch(/held: the locator could not be verified \(.*key.*\)/);
     await call(mm.publicBaseUrl, "POST", "/card/untamper");
-    expect((await call(t26.publicBaseUrl, "GET", "/corroborate")).body.verdict).toBe("AGREE");
+    { const rr = (await call(t26.publicBaseUrl, "GET", "/corroborate")).body; expect(rr.verdict, JSON.stringify(rr.findings)).toBe("AGREE"); }
     expect((await send("Restored")).delivered_to.agent).toBe("muse");
   });
 
@@ -102,10 +103,11 @@ describe("corroboration", () => {
     expect(kinds).toContain("omission"); // attacker mailbox has no InkBox card
     const d = await send("Hijacked");
     expect(d.delivered_to).toBeNull();
-    expect(d.error).toMatch(/held/);
+    expect(d.error).toMatch(/held: the locator could not be verified/);
+    expect(d.trace.some((t: string) => /^Verification: failed/.test(t))).toBe(true);
     await call(mm.publicBaseUrl, "POST", "/index/restore");
     expect((await call(mm.publicBaseUrl, "GET", "/index/status")).body.hijacked).toBe(false);
-    expect((await call(t26.publicBaseUrl, "GET", "/corroborate")).body.verdict).toBe("AGREE");
+    { const rr = (await call(t26.publicBaseUrl, "GET", "/corroborate")).body; expect(rr.verdict, JSON.stringify(rr.findings)).toBe("AGREE"); }
     expect((await send("Recovered")).delivered_to.agent).toBe("muse");
   });
 

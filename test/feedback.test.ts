@@ -74,7 +74,6 @@ describe("declining a topic", () => {
     expect(d.delivered_to).toBeNull();
     expect(d.declined).toBe("promotion");
     expect(d.error).toMatch(/declines promotion/);
-    expect(d.verdict).toBe("AGREE");
   });
 
   it("allowing promotions again restores delivery, to Wajo per the travel rule", async () => {

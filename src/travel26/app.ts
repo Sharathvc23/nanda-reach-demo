@@ -238,7 +238,7 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
 
   const lastReports = new Map<string, CorroborationReport>();
   /** Corroborate a locator now, without sending. Defaults to the first locator Travel26 holds. */
-  app.get<{ Querystring: { locator?: string } }>("/corroborate", async (req, reply) => {
+  app.get<{ Querystring: { locator?: string } }>("/corroborate", { preHandler: admin }, async (req, reply) => {
     const known = req.query.locator ? store.state.known_agents.find((k) => k.nanda_locator === req.query.locator) : store.state.known_agents.find((k) => k.nanda_locator);
     if (!known?.nanda_locator) return reply.code(404).send({ error: "no locator held" });
     const c = await corroborateLocator(config, known, ["travel", "promotion"]);
@@ -309,9 +309,17 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
         const c = await corroborateLocator(config, known, topics);
         lastReports.set(known.nanda_locator, c.report);
         entry.card_version = c.card?.version ?? null;
-        entry.verdict = c.report.verdict;
-        entry.trace.push(`Index: GET ${config.indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(known.nanda_locator)}`, ...describeReport(c.report));
-        if (c.report.verdict !== "AGREE") throw new Error(`held: corroboration ${c.report.verdict} (${c.report.findings.map((f) => f.kind).join(", ") || "not enough sources"})`);
+        // The public trace shows the hops; the source-by-source report stays on the admin endpoint.
+        const indexView = c.report.sources.find((s) => s.source === "nanda-index");
+        entry.trace.push(`Index: GET ${config.indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(known.nanda_locator)}`);
+        entry.trace.push(`Index: ${indexView?.status === "ok" ? `entry active, card ${c.card_url}` : `entry ${indexView?.detail ?? "not found"}`}`);
+        if (c.card) entry.trace.push(`Card: GET ${c.card_url}`, `Card: version ${c.card.version}, ${c.card.agents?.length ?? 0} agent(s), ${c.card.routing?.length ?? 0} rule(s)`);
+        if (c.report.verdict !== "AGREE") {
+          const kinds = c.report.findings.map((f) => f.kind).join(", ") || "not enough sources";
+          entry.trace.push(`Verification: failed (${kinds})`);
+          throw new Error(`held: the locator could not be verified (${kinds})`);
+        }
+        entry.trace.push("Verification: passed");
         // What a merchant that saved the URL would get right now.
         if (known.saved_card_url) {
           const n = await fetch(known.saved_card_url, { headers: { accept: "application/json" }, redirect: "manual", signal: AbortSignal.timeout(8_000) }).then((res) => res.status).catch(() => null);

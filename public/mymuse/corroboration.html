@@ -96,7 +96,7 @@
     const last=r.last_send; $("log").innerHTML=last?'<div><strong>'+esc(last.subject)+'</strong> <span class="ms">'+new Date(last.at).toLocaleTimeString()+'</span></div><div style="margin:4px 0">'+(last.delivered_to?'<span class="pill good">delivered</span> '+esc(last.delivered_to.agent)+' '+esc(last.delivered_to.address):'<span class="pill bad">held</span> '+esc(last.error||""))+'</div>'+trace(last.trace):'<div class="empty">None.</div>';
   }
   async function refresh(){
-    const [r,idx,state]=await Promise.all([fetch("/merchant/corroborate").then((x)=>x.json()).catch((e)=>({error:e.message})),fetch("/index/status").then((x)=>x.json()).catch(()=>null),fetch("/state").then((x)=>x.json()).catch(()=>null)]);
+    const [r,idx,state]=await Promise.all([fetch("/merchant/corroborate",{headers:headers(false)}).then((x)=>x.ok?x.json():x.json().then((j)=>({error:x.status===401?"admin token required to view this page":(j.error||("HTTP "+x.status))}))).catch((e)=>({error:e.message})),fetch("/index/status").then((x)=>x.json()).catch(()=>null),fetch("/state").then((x)=>x.json()).catch(()=>null)]);
     if(r.error&&!r.sources){ $("badge").textContent="—"; $("badge").className="badge"; $("sources").innerHTML='<tr><td colspan="3" class="empty">'+esc(r.error)+'</td></tr>'; if(idx){$("indexurl").textContent=idx.registry_url||"?";} return; }
     render(r,idx,state);
   }

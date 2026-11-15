@@ -116,8 +116,10 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
       return reply.code(502).send({ url: config.travel26Url, error: (e as Error).message, known_agents: [], promo_log: [] });
     }
   });
-  app.get("/merchant/corroborate", async (_req, reply) => {
-    const r = await merchant("/corroborate").catch((e: Error) => ({ status: 502, body: { error: e.message } }));
+  app.get("/merchant/corroborate", { preHandler: admin }, async (req, reply) => {
+    const headers: Record<string, string> = {};
+    if (req.headers.authorization) headers.authorization = req.headers.authorization;
+    const r = await merchant("/corroborate", { headers }).catch((e: Error) => ({ status: 502, body: { error: e.message } }));
     return reply.code(r.status).send(r.body);
   });
   app.post<{ Body: { subject?: string; body_text?: string } }>("/merchant/promo", { preHandler: admin }, async (req, reply) => {
