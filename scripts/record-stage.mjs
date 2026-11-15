@@ -70,7 +70,7 @@ await sleep(5000);
 
 await caption("Act 2 again", "Travel26 sends again, to the same locator.", "Fresh Index lookup, fresh read of the card, now version 2. The travel rule points at Wajo.", "merchant");
 await press(R, "Send another (Kyoto)");
-await waitText(R, "#log", /delivered to\s*wajo/i);
+await waitText(R, "#log", /delivered\s*wajo/i);
 await sleep(1500);
 await caption("Act 2 again", "Delivered to Wajo. Muse got nothing.", "On the right, previous and latest send side by side; the lines that changed are highlighted: card version, rule, inbox.", "merchant");
 await sleep(HOLD);
@@ -96,7 +96,7 @@ await idle(L);
 await sleep(1500);
 await press(R, "Send promotion");
 await waitText(R, "#log", /Saved-URL merchant: .*410/);
-await waitText(R, "#log", /delivered to\s*wajo/i);
+await waitText(R, "#log", /delivered\s*wajo/i);
 await sleep(1500);
 await caption("Act 5", "The saved URL answers 410 Gone. The locator still delivers.", "Same send: the saved-URL merchant lost John; Travel26 followed the Index to the new card and reached Wajo.", "merchant");
 await sleep(HOLD);

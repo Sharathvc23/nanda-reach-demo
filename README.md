@@ -14,9 +14,10 @@ spec. This demo fills that gap with the NANDA Index.
 
 [![The demo: John's side left, Travel26's site right](docs/demo/poster.png)](docs/demo/reach-john-demo.webm)
 
-**[Watch the 37-second run](docs/demo/reach-john-demo.webm)** (WebM). John's agent shops at Travel26 over Poppy and shares only his
+**[Watch the run](docs/demo/reach-john-demo.webm)** (WebM, about 80 seconds). John's agent shops at Travel26 over Poppy and shares only his
 NANDA locator; Travel26's first promotion lands in Muse; John reroutes travel to Wajo by editing his card; Travel26's next
-promotion, to the same locator, lands in Wajo. Live: [John's side](https://mymuse-production.up.railway.app) and
+promotion, to the same locator, lands in Wajo; John declines promotions and Travel26 holds; John moves his card and a
+merchant that saved the URL loses him while Travel26 does not. Live: [John's side](https://mymuse-production.up.railway.app) and
 [Travel26's desk](https://travel26-production.up.railway.app).
 
 A second cut, [single page, 81 seconds](docs/demo/reach-john-demo-single-page.webm), shows the same run on John's page alone.
