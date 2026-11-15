@@ -56,6 +56,22 @@ export async function buildMock(): Promise<MockApp> {
     };
   });
 
+  // InkBox agent cards for mailboxes: any handle exists except an attacker's.
+  app.get<{ Params: { handle: string } }>("/inkbox/a2a/:handle/card", async (req, reply) => {
+    if (/^attacker/i.test(req.params.handle)) return reply.code(404).send({ error: "not found" });
+    return { name: `@${req.params.handle}`, description: "mock InkBox agent card", version: "1" };
+  });
+
+  // Index account and entry update, enough for the attack controls.
+  app.post("/index/auth/login", async () => ({ token: "mock-index-token" }));
+  app.put<{ Params: { id: string }; Body: { registry_url?: string } }>("/index/api/v1/orgs/:id", async (req, reply) => {
+    const url = req.body?.registry_url;
+    if (!url) return reply.code(400).send({ error: "registry_url required" });
+    // Single-tenant mock: there is one entry, re-point it.
+    for (const e of index.values()) e.registry_url = url;
+    return { org_id: req.params.id, registry_url: url, status: "active", extensions: { "org.projectnanda": { status: "active" } } };
+  });
+
   type SendBody = { recipients?: { to?: string[] }; subject?: string; body_text?: string };
   app.post<{ Params: { addr: string }; Body: SendBody }>("/inkbox/mail/mailboxes/:addr/messages", async (req, reply) => {
     if (!req.headers["x-api-key"]) return reply.code(401).send({ error: "X-API-Key required" });

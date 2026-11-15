@@ -38,6 +38,44 @@ John's personal agent, **mymuse**, speaks Poppy. **Travel26** is a Poppy company
    there. mymuse edits its own card. Travel26 is not told. The next promotion resolves the same
    locator, gets card v2, and lands in Wajo. Muse gets nothing.
 
+## Demo 2: corroboration before contact
+
+A merchant that pushes to a pointer it does not control has to trust that pointer. In demo 1, Travel26 trusts
+one chain: Index says card, card says inbox. If the Index entry is re-pointed or the card host is swapped, John's
+offers go to someone else and the trace still looks fine.
+
+Demo 2 makes Travel26 corroborate before every send, with a TypeScript port of the kernel from
+[sm-resolver](https://github.com/Sharathvc23/sm-resolver) and the finding kinds from
+[sm-divergence](https://github.com/Sharathvc23/sm-divergence) and draft-chandra-agent-registry-corroboration.
+Five sources answer the same question about John's locator:
+
+| Source           | What it says                                                                                   |
+| ---------------- | ---------------------------------------------------------------------------------------------- |
+| `travel26`       | First-hand: the Poppy client_id it met, and the locator that client shared                     |
+| `nanda-index`    | Which card URL the Index entry points at                                                       |
+| `card`           | Whose locator and client_id the card claims, the inbox its rules pick, and whether its signature verifies |
+| `poppy-identity` | The client metadata and keys of the identity Travel26 met, used to check that signature       |
+| `inkbox`         | InkBox's own agent card for the target mailbox: does it exist                                   |
+
+The binding that makes it strong: John's card is signed by the same key his agent uses in Poppy sessions
+(`proof` on the card, verified against the identity's `jwks_uri`). A card the Index points at must be signed
+by the identity Travel26 actually met.
+
+Verdicts are `AGREE`, `DIVERGENT` or `INSUFFICIENT`: any disagreement on a decisive field is divergence, no
+voting. Travel26 sends only on `AGREE`; otherwise the send is held and the finding is shown.
+
+Two attacks, both live on the page at `/corroboration.html` on John's host:
+
+1. **Tampered card host.** The host swaps John's inbox for an attacker's after signing. Finding `key`: the
+   signature no longer verifies. Held.
+2. **Hijacked Index entry.** John's real entry in the NANDA Index is re-pointed at an attacker's card that claims
+   his locator and client_id and is signed with the attacker's key. Findings `key` and `omission` (InkBox has no
+   card for the attacker's mailbox). Held. Restoring the entry restores delivery.
+
+**Outcome:** Poppy has no company-to-agent push channel; a NANDA locator gives one; corroboration is what makes a
+merchant safe to use it. The second video, [reach-john-corroboration.webm](docs/demo/reach-john-corroboration.webm),
+shows both attacks refused and both recoveries.
+
 ## Who does what
 
 | Piece              | Protocol role                                   | Here                                                                                              |

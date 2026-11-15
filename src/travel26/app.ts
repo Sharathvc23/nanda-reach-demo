@@ -12,6 +12,8 @@ import { InkboxClient } from "../shared/inkbox.js";
 import { LOCATOR } from "../shared/env.js";
 import { PoppyError, POPPY_VERSION, REACH_EXTENSION, REACH_VERSION, SessionVerifier, audienceOf, type VerifiedSession } from "../shared/poppy.js";
 import { resolveLocator } from "./resolver.js";
+import { corroborateLocator } from "./corroborate.js";
+import { describeReport, type CorroborationReport } from "../shared/corroborate.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -43,6 +45,7 @@ export interface PromoDelivery {
   delivered_to: { agent: string; address: string } | null;
   error: string | null;
   trace: string[];
+  verdict?: string;
 }
 
 interface Travel26State {
@@ -212,6 +215,16 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
     does_not_store: ["agent_card", "inbox_address", "endpoint_url"],
   }));
 
+  const lastReports = new Map<string, CorroborationReport>();
+  /** Corroborate a locator now, without sending. Defaults to the first locator Travel26 holds. */
+  app.get<{ Querystring: { locator?: string } }>("/corroborate", async (req, reply) => {
+    const known = req.query.locator ? store.state.known_agents.find((k) => k.nanda_locator === req.query.locator) : store.state.known_agents.find((k) => k.nanda_locator);
+    if (!known?.nanda_locator) return reply.code(404).send({ error: "no locator held" });
+    const c = await corroborateLocator(config, known, ["travel", "promotion"]);
+    lastReports.set(known.nanda_locator, c.report);
+    return { ...c.report, card_url: c.card_url, target: c.target, last_send: store.state.promo_log.find((d) => d.locator === known!.nanda_locator) ?? null };
+  });
+
   app.get("/known-agents", async () => store.state.known_agents);
 
   /** Where each known locator resolves right now: a dry run of the chain, cached briefly. */
@@ -270,10 +283,16 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
           continue;
         }
         sentLocators.add(known.nanda_locator);
-        const r = await resolveLocator(config.indexBaseUrl, known.nanda_locator, topics);
-        entry.trace = r.trace;
-        entry.card_version = r.card?.version ?? null;
+        // Several sources, one question. Send only on agreement.
+        const c = await corroborateLocator(config, known, topics);
+        lastReports.set(known.nanda_locator, c.report);
+        entry.card_version = c.card?.version ?? null;
+        entry.verdict = c.report.verdict;
+        entry.trace.push(`Index: GET ${config.indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(known.nanda_locator)}`, ...describeReport(c.report));
+        if (c.report.verdict !== "AGREE") throw new Error(`held: corroboration ${c.report.verdict} (${c.report.findings.map((f) => f.kind).join(", ") || "not enough sources"})`);
+        const r = { target: c.target ? { agent: { id: c.target.agent, name: c.target.name, inbox: { address: c.target.address } }, rule: { match: c.target.rule } } : null };
         if (!r.target) throw new Error("could not resolve the locator to an inbox");
+        entry.trace.push(`Route: topics [${topics.join(", ")}] -> rule "${r.target.rule.match}" -> ${r.target.agent.name} <${r.target.agent.inbox.address}>`);
         // A unique offer reference per send: InkBox holds a third identical body to the same mailbox until it gets a reply.
         const uniqueBody = `${bodyText}\n\nOffer ref ${entry.id.replace(/^promo_/, "").toUpperCase()} · ${new Date(entry.at).toUTCString()}`;
         const sent = await inkbox.send({ address: config.address, apiKey: config.apiKey }, { to: r.target.agent.inbox.address, subject, body_text: uniqueBody }, entry.id);

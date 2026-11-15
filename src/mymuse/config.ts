@@ -17,6 +17,10 @@ export interface MymuseConfig extends SharedConfig {
   model: string;
   /** Whether John lets companies that support nandaindex.org/reach keep his locator. */
   shareLocator: boolean;
+  /** John's NANDA Index account, used only by the attack-simulation controls to re-point his entry. */
+  indexAccount: { email: string; password: string; orgId: string };
+  /** The mailbox an attacker would try to divert John's mail to. */
+  attackerAddress: string;
 }
 
 export function loadMymuseConfig(overrides: Overrides = {}): MymuseConfig {
@@ -35,5 +39,7 @@ export function loadMymuseConfig(overrides: Overrides = {}): MymuseConfig {
     brain,
     model: env("AGENT_MODEL", "claude-opus-5-5", overrides),
     shareLocator: env("SHARE_LOCATOR", "true", overrides) !== "false",
+    indexAccount: { email: env("INDEX_EMAIL", "", overrides), password: env("INDEX_PASSWORD", "", overrides), orgId: env("INDEX_ORG_ID", "mymuse", overrides) },
+    attackerAddress: env("ATTACKER_ADDRESS", "attacker@inkboxmail.test", overrides),
   };
 }

@@ -40,6 +40,8 @@ export interface AgentCard {
   agents: CardAgent[];
   routing: RoutingRule[];
   updated_at: string;
+  /** Detached signature by the Poppy identity's key (see cardproof.ts). */
+  proof?: { type: "JWS"; alg: "ES256"; kid: string; jws: string; created: string };
 }
 
 /** Pick the agent a message with these topics should go to. */
