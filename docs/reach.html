@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nandaindex.org/reach — a Poppy extension for reaching a personal agent later</title>
+<meta name="description" content="Version 1 of the nandaindex.org/reach extension: a company keeps only a person's NANDA locator and resolves it in the NANDA Index at send time.">
+<style>
+  :root { --ink:#14213D; --muted:#4A5568; --line:#D6DBE6; --soft:#F3F5F9; --accent:#2563EB; }
+  body { margin:0; background:#FBFBF8; color:var(--ink); font:17px/1.6 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:40px 20px 80px; }
+  h1 { font-size:34px; line-height:1.2; margin:0 0 8px; letter-spacing:-0.01em; }
+  h2 { font-size:24px; margin:40px 0 12px; padding-top:12px; border-top:1px solid var(--line); }
+  h3 { font-size:19px; margin:24px 0 8px; }
+  p, li { max-width:72ch; }
+  code { font:0.92em/1.5 Consolas, "JetBrains Mono", "Courier New", monospace; background:var(--soft); border:1px solid var(--line); border-radius:4px; padding:1px 5px; overflow-wrap:anywhere; }
+  pre { background:var(--ink); color:#E6EAF2; border-radius:10px; padding:16px 18px; overflow:auto; font:14.5px/1.5 Consolas, "JetBrains Mono", "Courier New", monospace; }
+  pre code { background:none; border:0; padding:0; color:inherit; font:inherit; }
+  table { border-collapse:collapse; width:100%; font-size:15.5px; margin:12px 0 20px; }
+  th, td { text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line); }
+  th { background:var(--soft); font-weight:600; }
+  td code { white-space:nowrap; }
+  a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+  hr { border:0; border-top:1px solid var(--line); margin:28px 0; }
+  h1 + p strong { font-weight:600; font-size:19px; }
+</style>
+</head>
+<body>
+<main>
+<h1>nandaindex.org/reach</h1>
+<p><strong>A Personal Agent Protocol (Poppy) extension for reaching a person&#39;s agent later, through the NANDA Index.</strong></p>
+<p>Version 1 · Draft of 2026-11-15 · Status: proposal, with a running reference implementation</p>
+<ul>
+<li>Reference implementation and demo: <a href="https://github.com/Sharathvc23/nanda-reach-demo">https://github.com/Sharathvc23/nanda-reach-demo</a></li>
+<li>Slides, IETF 127 Hackathon: <a href="https://github.com/Sharathvc23/nanda-reach-demo/blob/main/docs/ietfdawn2026.pdf">ietfdawn2026.pdf</a></li>
+<li>Live: John&#39;s agent <a href="https://mymuse.stellarminds.ai">https://mymuse.stellarminds.ai</a> · the company <a href="https://travel26-production.up.railway.app">https://travel26-production.up.railway.app</a></li>
+</ul>
+<hr>
+<h2>1. Purpose</h2>
+<p>Poppy 1.0 lets a Personal Agent find a Company through <code>/.well-known/poppy.json</code>, open a pseudonymous session and use the Company&#39;s APIs. It has no way for the Company to contact the Personal Agent after the session is over. Push notifications are on Poppy&#39;s roadmap, not in the specification.</p>
+<p>This extension gives the Company one durable thing to keep: the person&#39;s <strong>NANDA locator</strong>, a stable identifier that starts from a verified email and is resolved in the NANDA Index. Everything that can change later, which agent the person uses, where the agent card lives, which inbox a topic goes to, is looked up at send time. The Company never stores an inbox address, an endpoint or a card URL.</p>
+<p>The resolution chain:</p>
+<pre><code>locator → Index entry → agent card → routing rule → inbox
+</code></pre>
+<p>The locator is the only link held by the Company. Every hop after it is controlled by the person.</p>
+<h2>2. Terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Company</td>
+<td>The site a Personal Agent acts on, as in Poppy. Publishes <code>/.well-known/poppy.json</code>.</td>
+</tr>
+<tr>
+<td>Personal Agent</td>
+<td>The agent acting for the person, as in Poppy. Has a <code>client_id</code> URL and a client metadata document.</td>
+</tr>
+<tr>
+<td>NANDA locator</td>
+<td>A URN of the form <code>urn:air:&lt;publisher&gt;:personal:&lt;email&gt;</code>, registered in the NANDA Index by the person. Example: <code>urn:air:host39.org:personal:john@example.com</code>.</td>
+</tr>
+<tr>
+<td>NANDA Index</td>
+<td>The resolution service. <code>GET /api/v1/resolve?locator=&lt;locator&gt;</code> returns the entry, which names the current agent card URL. Reference deployment: <code>https://api.nandaindex.org</code>.</td>
+</tr>
+<tr>
+<td>Agent card</td>
+<td>An A2A-shaped JSON document the person hosts at a URL of their choice. For this extension it carries two additional fields, <code>agents</code> and <code>routing</code> (section 6).</td>
+</tr>
+<tr>
+<td>Topic</td>
+<td>A short label the Company attaches to a message, such as <code>travel</code> or <code>promotion</code>. The card routes by topic.</td>
+</tr>
+</tbody></table>
+<p>The key words MUST, MUST NOT, SHOULD and MAY are to be read as in BCP 14.</p>
+<h2>3. Company declaration in poppy.json</h2>
+<p>A Company that supports the extension lists it under <code>extensions</code> in its <code>poppy.json</code>:</p>
+<pre><code class="language-json">&quot;extensions&quot;: {
+  &quot;nandaindex.org/reach&quot;: [
+    {
+      &quot;version&quot;: &quot;1&quot;,
+      &quot;index&quot;: &quot;https://api.nandaindex.org&quot;,
+      &quot;message_topics&quot;: [&quot;travel&quot;, &quot;promotion&quot;],
+      &quot;sender&quot;: &quot;travel26desk@inkboxmail.com&quot;,
+      &quot;endpoint&quot;: &quot;https://travel26.example/poppy/reach&quot;,
+      &quot;description&quot;: &quot;What the Company keeps and how it reaches you.&quot;
+    }
+  ]
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>version</code></td>
+<td>yes</td>
+<td><code>&quot;1&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>index</code></td>
+<td>yes</td>
+<td>Base URL of the NANDA Index the Company resolves against.</td>
+</tr>
+<tr>
+<td><code>message_topics</code></td>
+<td>yes</td>
+<td>Topics the Company may send. A person can route or decline each one on their card.</td>
+</tr>
+<tr>
+<td><code>sender</code></td>
+<td>yes</td>
+<td>The address messages will come from, so the person can recognise and filter them.</td>
+</tr>
+<tr>
+<td><code>endpoint</code></td>
+<td>no</td>
+<td>A URL that documents the Company&#39;s use of the extension in human- and machine-readable form.</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>no</td>
+<td>One sentence for the person.</td>
+</tr>
+</tbody></table>
+<h2>4. Personal Agent opt-in</h2>
+<p>The Personal Agent opts in per session by sending the Poppy extensions header on its requests:</p>
+<pre><code>Poppy-Extensions: &quot;nandaindex.org/reach&quot;;v=&quot;1&quot;
+</code></pre>
+<p>and by publishing the locator in its <strong>client metadata document</strong> (the document at its <code>client_id</code> URL, which the Company already fetches to verify the Poppy-Session JWT):</p>
+<pre><code class="language-json">{
+  &quot;client_id&quot;: &quot;https://agent.example/poppy/client.json&quot;,
+  &quot;client_name&quot;: &quot;mymuse&quot;,
+  &quot;jwks_uri&quot;: &quot;https://agent.example/poppy/jwks.json&quot;,
+  &quot;nanda_locator&quot;: &quot;urn:air:host39.org:personal:john@example.com&quot;,
+  &quot;nanda_card&quot;: &quot;https://agent.example/.well-known/agent-card.json&quot;
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>nanda_locator</code></td>
+<td>yes</td>
+<td>The person&#39;s NANDA locator.</td>
+</tr>
+<tr>
+<td><code>nanda_card</code></td>
+<td>no</td>
+<td>Where the card lives today. Informational only. The Company MUST NOT use it to reach the person; it MUST resolve the locator instead (section 5).</td>
+</tr>
+</tbody></table>
+<p>The Company reads <code>nanda_locator</code> only when the header is present with a matching version. A request without the header is an ordinary Poppy request and nothing is stored.</p>
+<p>Because the metadata document is fetched over HTTPS from the <code>client_id</code> origin and the session JWT is verified against the keys that document names, the locator arrives bound to the same identity as the session.</p>
+<h3>4.1 Alternative: a tool call</h3>
+<p>A Company that exposes an MCP API MAY also offer a tool for agents that do not implement the header:</p>
+<pre><code>share_nanda_locator({ nanda_locator: &quot;urn:air:…&quot; })
+</code></pre>
+<p>The effect is identical to the header path. The reference implementation offers both.</p>
+<h2>5. What the Company stores, and how it reaches the person</h2>
+<p>The Company stores, per known agent: the Poppy <code>client_id</code>, the pseudonymous user id (<code>sub</code>) and the <code>nanda_locator</code>.</p>
+<p>The Company MUST NOT store, for the purpose of contacting the person later: the agent card, any inbox address, any endpoint URL, or the card URL returned by the Index. It MAY cache a resolution for a short time within one send.</p>
+<p>To send a message with topics T the Company:</p>
+<ol>
+<li>Resolves the locator: <code>GET &lt;index&gt;/api/v1/resolve?locator=&lt;locator&gt;</code>.</li>
+<li>Takes the entry&#39;s <code>registry_url</code> (or <code>url</code>) as the card URL and checks the entry&#39;s status is <code>active</code>.</li>
+<li>Fetches the card and checks it has <code>agents</code> and <code>routing</code>.</li>
+<li>Walks <code>routing</code> in order and takes the first rule whose <code>match</code> is in T or is <code>&quot;*&quot;</code>.</li>
+<li>If the rule&#39;s <code>deliver_to</code> is <code>&quot;none&quot;</code>, the person declines this topic: the Company MUST NOT send, and SHOULD record the hold as the person&#39;s choice rather than an error.</li>
+<li>Otherwise delivers to the inbox of the agent whose <code>id</code> equals <code>deliver_to</code>, by that inbox&#39;s <code>kind</code>.</li>
+</ol>
+<p>Because step 1 runs on every send, the person can change agents, re-point their Index entry, move their card to a new URL or decline a topic, and the next send follows the new card with no action on the Company&#39;s side. A Company that saved the card URL at first contact instead would receive <code>410 Gone</code> after a move and lose the person; the reference demo shows both side by side.</p>
+<h2>6. Agent card fields</h2>
+<p>The card is an A2A agent card (so Index card checks and generic A2A clients accept it) with two added fields:</p>
+<pre><code class="language-json">&quot;agents&quot;: [
+  { &quot;id&quot;: &quot;muse&quot;, &quot;name&quot;: &quot;John on Muse&quot;, &quot;harness&quot;: &quot;muse&quot;,
+    &quot;inbox&quot;: { &quot;kind&quot;: &quot;inkbox&quot;, &quot;address&quot;: &quot;johnmuse@inkboxmail.com&quot; } },
+  { &quot;id&quot;: &quot;wajo&quot;, &quot;name&quot;: &quot;John on Wajo&quot;, &quot;harness&quot;: &quot;wajo&quot;,
+    &quot;inbox&quot;: { &quot;kind&quot;: &quot;inkbox&quot;, &quot;address&quot;: &quot;john@inkboxmail.com&quot; } }
+],
+&quot;routing&quot;: [
+  { &quot;match&quot;: &quot;travel&quot;,    &quot;deliver_to&quot;: &quot;wajo&quot; },
+  { &quot;match&quot;: &quot;promotion&quot;, &quot;deliver_to&quot;: &quot;none&quot; },
+  { &quot;match&quot;: &quot;*&quot;,         &quot;deliver_to&quot;: &quot;muse&quot; }
+],
+&quot;version&quot;: &quot;2&quot;
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>agents[].id</code></td>
+<td>Stable id referenced by <code>routing</code>.</td>
+</tr>
+<tr>
+<td><code>agents[].inbox.kind</code></td>
+<td>Delivery mechanism. This version defines <code>inkbox</code> (an InkBox mailbox address). Other kinds may be added.</td>
+</tr>
+<tr>
+<td><code>agents[].inbox.address</code></td>
+<td>The address for that kind.</td>
+</tr>
+<tr>
+<td><code>routing[].match</code></td>
+<td>A topic, or <code>&quot;*&quot;</code> for everything else. First match wins.</td>
+</tr>
+<tr>
+<td><code>routing[].deliver_to</code></td>
+<td>An agent id on the card, or <code>&quot;none&quot;</code>: the person declines the topic.</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>Incremented on every change, so a sender can log which version it followed.</td>
+</tr>
+</tbody></table>
+<h2>7. Security and privacy considerations</h2>
+<ul>
+<li>The locator is derived from an email address. A Personal Agent SHOULD share it only with Companies the person has chosen to deal with, and only when the person has agreed to be contacted later. The opt-in is per session, not per agent.</li>
+<li>The Company learns nothing about where the person&#39;s agents are until it sends, and nothing it learns at send time is kept. Changing agents, hosts or preferences does not require telling any Company.</li>
+<li>The Index entry is controlled by the person&#39;s Index account. Integrity of the card itself (that the document fetched is the one the person published) is out of scope for this version and is the subject of separate work.</li>
+<li>Declining a topic is expressed on the card, where the person can see and change it, rather than in per-Company settings.</li>
+<li>A Company MUST honour <code>&quot;none&quot;</code> and MUST NOT fall back to a cached inbox or card URL when resolution fails.</li>
+</ul>
+<h2>8. Relation to other work</h2>
+<ul>
+<li><strong>Poppy 1.0</strong> (personalagentprotocol.org): session, client metadata, <code>Poppy-Extensions</code>. This extension adds two metadata fields and one poppy.json entry; it changes nothing in the session mechanics.</li>
+<li><strong>A2A agent cards</strong>: the card remains a valid A2A card; <code>agents</code> and <code>routing</code> are additive.</li>
+<li><strong>NANDA Index</strong> (nandaindex.org/paper.pdf): the locator is the stable resource identifier, the Index the resolution layer, the card the discovery entry point.</li>
+<li><strong>IETF DAWN</strong>: DNS-AID anchors discovery in a DNS zone the subject owns; mDNS in the local link. A NANDA locator anchors a personal agent in a verified email, for people who have no domain of their own. The approaches compose: an enterprise anchors in DNS, a person in the Index, and a card can carry both. See draft-raskar-agentic-web-federated-resolution.</li>
+</ul>
+<h2>9. Reference implementation</h2>
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Company side: poppy.json, <code>/poppy/reach</code>, MCP tools, the send-time chain</td>
+<td><code>src/travel26/app.ts</code>, <code>src/travel26/resolver.ts</code></td>
+</tr>
+<tr>
+<td>Personal Agent side: client metadata, header, card editing</td>
+<td><code>src/mymuse/poppy-client.ts</code>, <code>src/mymuse/card.ts</code></td>
+</tr>
+<tr>
+<td>Card schema and routing</td>
+<td><code>src/shared/card.ts</code></td>
+</tr>
+<tr>
+<td>Poppy session verification</td>
+<td><code>src/shared/poppy.ts</code></td>
+</tr>
+<tr>
+<td>Live company declaration</td>
+<td><code>https://travel26-production.up.railway.app/.well-known/poppy.json</code></td>
+</tr>
+<tr>
+<td>Live agent card</td>
+<td><code>https://mymuse.stellarminds.ai/.well-known/agent-card.json</code></td>
+</tr>
+</tbody></table>
+<p>Feedback: open an issue on the repository, or reply on the DAWN list.</p>
+
+</main>
+</body>
+</html>

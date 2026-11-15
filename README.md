@@ -21,6 +21,11 @@ John reroutes travel to Wajo by editing his card; Travel26's next promotion, to 
 declines promotions and Travel26 holds; John moves his card and a merchant that saved the URL loses him while Travel26
 does not. Live: [John's side](https://mymuse.stellarminds.ai) and [Travel26's desk](https://travel26-production.up.railway.app).
 
+## IETF 127 Hackathon
+
+- Slides: [docs/ietfdawn2026.pdf](docs/ietfdawn2026.pdf) (nine slides, 16:9).
+- The `nandaindex.org/reach` extension, version 1: [docs/reach.md](docs/reach.md). The same text as a standalone page, for hosting at that URL: [docs/reach.html](docs/reach.html).
+
 ## The story, in three acts
 
 John's personal agent, **mymuse**, speaks Poppy. **Travel26** is a Poppy company.
