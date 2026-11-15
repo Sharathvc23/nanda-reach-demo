@@ -74,8 +74,10 @@
   const $=(id)=>document.getElementById(id);
   const esc=(s)=>String(s??"").replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const tokenInput=$("token"); try{tokenInput.value=localStorage.getItem("adminToken")||"";}catch{}
-  tokenInput.addEventListener("change",()=>{try{localStorage.setItem("adminToken",tokenInput.value);}catch{}});
-  const headers=(hasBody)=>{const h={}; if(hasBody) h["content-type"]="application/json"; if(tokenInput.value) h["authorization"]="Bearer "+tokenInput.value; return h;};
+  const tokenState=document.createElement("span"); tokenState.style.cssText="font-size:12px;margin-left:6px"; tokenInput.insertAdjacentElement("afterend",tokenState);
+  let tokenTimer=null; async function verifyToken(){const v=tokenInput.value.trim(); if(v!==tokenInput.value) tokenInput.value=v; try{localStorage.setItem("adminToken",v);}catch{} if(!v){tokenState.textContent=""; return;} tokenState.textContent="…"; try{const r=await fetch("/admin/check",{headers:{authorization:"Bearer "+v}}); tokenState.textContent=r.ok?"✓ ok":"✗ rejected"; tokenState.style.color=r.ok?"var(--ok)":"var(--warn)";}catch{tokenState.textContent="?";}}
+  tokenInput.addEventListener("input",()=>{clearTimeout(tokenTimer); tokenTimer=setTimeout(verifyToken,400);}); tokenInput.addEventListener("change",verifyToken); if(tokenInput.value) verifyToken();
+  const headers=(hasBody)=>{const h={}; if(hasBody) h["content-type"]="application/json"; if(tokenInput.value.trim()) h["authorization"]="Bearer "+tokenInput.value.trim(); return h;};
   const setStatus=(t,err)=>{const el=$("status"); el.textContent=t; el.className="status"+(err?" err":"");};
   async function api(method,url,body){const res=await fetch(url,{method,headers:headers(body!==undefined),body:body===undefined?undefined:JSON.stringify(body)}); const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data.error||(method+" "+url+" -> "+res.status)); return data;}
   const trace=(t)=>'<div class="trace">'+(t||[]).map((x)=>'<div class="'+(/^Corroboration: AGREE|^InkBox: sent|^Route:/.test(x)?"hit":/^Error|^  finding|^Corroboration: DIVERGENT/.test(x)?"err":"")+'">'+esc(x)+"</div>").join("")+"</div>";

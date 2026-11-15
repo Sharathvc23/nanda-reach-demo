@@ -77,6 +77,7 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
     return { ok, reply: text, steps: tools.steps, card_version: store.state.version };
   });
 
+  app.get("/admin/check", { preHandler: admin }, async () => ({ ok: true }));
   app.get("/chat", async () => store.state.chat);
 
   /** The inbox of an agent on the card. The address comes from the card; a key is used only when this host holds one for that address. */

@@ -225,6 +225,7 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
     return { ...c.report, card_url: c.card_url, target: c.target, last_send: store.state.promo_log.find((d) => d.locator === known!.nanda_locator) ?? null };
   });
 
+  app.get("/admin/check", { preHandler: admin }, async () => ({ ok: true }));
   app.get("/known-agents", async () => store.state.known_agents);
 
   /** Where each known locator resolves right now: a dry run of the chain, cached briefly. */
