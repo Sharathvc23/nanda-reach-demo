@@ -201,7 +201,7 @@
     const inboxes={}; ids.forEach((id,i)=>inboxes[id]=boxes[i]);
     renderMerchant(m); renderChat(state.chat); renderPipe(state.card); renderCard(state.card,inboxes);
   }
-  async function run(label,fn){const bs=document.querySelectorAll("button"); bs.forEach((b)=>b.disabled=true); setStatus(label+"…"); try{const out=await fn(); setStatus(label+" done."+(out?" "+out:"")); await refresh(); for(let i=0;i<3;i++){await new Promise((r)=>setTimeout(r,2500)); await refresh();}}catch(e){setStatus(label+" failed: "+e.message,true);}finally{bs.forEach((b)=>b.disabled=false);}}
+  async function run(label,fn){const bs=document.querySelectorAll("button"); bs.forEach((b)=>b.disabled=true); setStatus(label+"…"); try{const out=await fn(); setStatus(label+" done."+(out?" "+out:"")); await refresh();}catch(e){setStatus(label+" failed: "+e.message,true);}finally{bs.forEach((b)=>b.disabled=false);} for(let i=0;i<4;i++){await new Promise((r)=>setTimeout(r,1500)); await refresh().catch(()=>{});}}
   const say=(text)=>run("mymuse",async()=>{const r=await api("POST","/chat",{message:text}); $("input").value=""; return r.ok?"Card v"+r.card_version+".":"see the reply.";});
   const summarize=(r)=>{const d=(r.results||[]).find((x)=>x.delivered_to||x.error)||r.results?.[0]; if(!d) return "nobody to send to"; return d.delivered_to?"Delivered to "+d.delivered_to.agent+" using card v"+d.card_version+".":d.error;};
   $("form").onsubmit=(e)=>{e.preventDefault(); const t=$("input").value.trim(); if(t) say(t);};
@@ -210,7 +210,7 @@
   $("reset").onclick=()=>run("Start over",async()=>{await api("POST","/reset"); await api("POST","/merchant/reset"); return "Card v1, Travel26 forgot everyone.";});
   $("promo").onclick=()=>run("Travel26 send",async()=>summarize(await api("POST","/merchant/promo",{})));
   $("promo2").onclick=()=>run("Travel26 send",async()=>summarize(await api("POST","/merchant/promo",{subject:"Travel26: Kyoto in autumn, 6 nights with rail pass",body_text:"Hi John, a follow-up from Travel26. Kyoto in autumn, six nights with a rail pass, is $1,990 this month.\n\nSame locator as before. Your card decided where this landed."})));
-  (async()=>{cfg=await api("GET","/config"); $("brain").textContent=cfg.brain==="llm"?"model · "+cfg.model:"scripted brain"; $("foot").innerHTML="Index "+esc(cfg.index_base_url)+" · InkBox "+esc(cfg.inkbox_base_url)+" · merchant "+esc(cfg.travel26_url)+" · card connector for other agents "+esc(cfg.card_mcp_url); await refresh(); setInterval(refresh,10000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
+  (async()=>{cfg=await api("GET","/config"); $("brain").textContent=cfg.brain==="llm"?"model · "+cfg.model:"scripted brain"; $("foot").innerHTML="Index "+esc(cfg.index_base_url)+" · InkBox "+esc(cfg.inkbox_base_url)+" · merchant "+esc(cfg.travel26_url)+" · card connector for other agents "+esc(cfg.card_mcp_url); await refresh(); setInterval(refresh,4000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
 })();
 </script>
 </body>

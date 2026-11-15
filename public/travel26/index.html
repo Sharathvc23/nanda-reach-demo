@@ -79,7 +79,7 @@
   $("promo").onclick=()=>run("Send",async()=>summarize(await api("POST","/promo")));
   $("promo2").onclick=()=>run("Send",async()=>summarize(await api("POST","/promo",{subject:"Travel26: Kyoto in autumn, 6 nights with rail pass",body_text:"Hi John, a follow-up from Travel26. Kyoto in autumn, six nights with a rail pass, is $1,990 this month.\n\nSame locator as before. Your card decided where this landed."})));
   $("reset").onclick=()=>run("Reset",async()=>{await api("POST","/reset"); return "Travel26 forgot everyone.";});
-  (async()=>{const cfg=await api("GET","/config"); const poppy=await api("GET","/.well-known/poppy.json"); $("poppyurl").textContent=cfg.poppy_url; $("poppy").textContent=JSON.stringify(poppy,null,2); $("foot").innerHTML="Mode <strong>"+esc(cfg.mode)+"</strong> · sender "+esc(cfg.address)+" · Index "+esc(cfg.index_base_url)+" · MCP "+esc(cfg.mcp_url)+(cfg.admin_required?" · admin token required to send":""); await refresh(); setInterval(refresh,6000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
+  (async()=>{const cfg=await api("GET","/config"); const poppy=await api("GET","/.well-known/poppy.json"); $("poppyurl").textContent=cfg.poppy_url; $("poppy").textContent=JSON.stringify(poppy,null,2); $("foot").innerHTML="Mode <strong>"+esc(cfg.mode)+"</strong> · sender "+esc(cfg.address)+" · Index "+esc(cfg.index_base_url)+" · MCP "+esc(cfg.mcp_url)+(cfg.admin_required?" · admin token required to send":""); await refresh(); setInterval(refresh,3000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
 })();
 </script>
 </body>
