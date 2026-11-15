@@ -1,0 +1,54 @@
+/**
+ * The personal agent card. A2A agent card fields first, so the NANDA Index card
+ * check and generic A2A clients accept it, then what Poppy adds: the person's inboxes
+ * (`agents`) and which one a message topic goes to (`routing`).
+ *
+ * mymuse produces it; Travel26 consumes it. Neither side needs the other's code.
+ */
+export interface CardAgent {
+  id: string;
+  name: string;
+  harness: string;
+  inbox: { kind: "inkbox"; address: string };
+  topics: string[];
+}
+
+export interface RoutingRule {
+  /** A topic, or "*" for everything else. First matching rule wins. */
+  match: string;
+  deliver_to: string;
+  note?: string;
+}
+
+export interface AgentCard {
+  kind: "personal";
+  name: string;
+  description: string;
+  version: string;
+  url: string;
+  protocolVersion: string;
+  provider: { organization: string; url: string };
+  supportedInterfaces: { url: string; protocolBinding: string; protocolVersion: string }[];
+  capabilities: { streaming: boolean; pushNotifications: boolean; extensions: { uri: string; description: string }[] };
+  defaultInputModes: string[];
+  defaultOutputModes: string[];
+  skills: { id: string; name: string; description: string; tags: string[] }[];
+  nanda: { locator: string; index: string };
+  poppy: { client_id: string };
+  owner: { name: string };
+  chat: { url: string };
+  agents: CardAgent[];
+  routing: RoutingRule[];
+  updated_at: string;
+}
+
+/** Pick the agent a message with these topics should go to. */
+export function routeCard(card: Pick<AgentCard, "agents" | "routing">, topics: string[]): { agent: CardAgent; rule: RoutingRule } | null {
+  for (const rule of card.routing) {
+    if (rule.match === "*" || topics.includes(rule.match)) {
+      const agent = card.agents.find((a) => a.id === rule.deliver_to);
+      if (agent) return { agent, rule };
+    }
+  }
+  return null;
+}

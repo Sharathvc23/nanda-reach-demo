@@ -1,0 +1,37 @@
+import { env, loadShared, stripSlash, type Overrides, type SharedConfig } from "../shared/env.js";
+import type { Mailbox } from "../shared/inkbox.js";
+
+export type Brain = "claude" | "scripted";
+
+export interface MymuseConfig extends SharedConfig {
+  owner: string;
+  /** John's NANDA locator: urn:air:host39.org:personal:<his first InkBox address>. */
+  locator: string;
+  /** The agent's own mailbox (John on Muse). */
+  muse: Mailbox & { name: string; harness: string };
+  /** John's second agent's mailbox (John on Wajo). The key is only needed to show that inbox in the console. */
+  wajo: Mailbox & { name: string; harness: string };
+  /** The merchant the agent shops at when John does not name one. */
+  travel26Url: string;
+  brain: Brain;
+  model: string;
+  /** Whether John lets companies that support nandaindex.org/reach keep his locator. */
+  shareLocator: boolean;
+}
+
+export function loadMymuseConfig(overrides: Overrides = {}): MymuseConfig {
+  const museAddress = env("MYMUSE_ADDRESS", "john-muse@inkboxmail.test", overrides);
+  const brainSetting = env("AGENT_BRAIN", "", overrides);
+  const brain: Brain = brainSetting === "scripted" || brainSetting === "claude" ? brainSetting : process.env.ANTHROPIC_API_KEY ? "claude" : "scripted";
+  return {
+    ...loadShared(8096, overrides),
+    owner: env("OWNER_NAME", "John", overrides),
+    locator: env("JOHN_LOCATOR", `urn:air:host39.org:personal:${museAddress}`, overrides),
+    muse: { name: "John on Muse", harness: "Muse", address: museAddress, apiKey: env("MYMUSE_API_KEY", "mock-key-muse", overrides) },
+    wajo: { name: "John on Wajo", harness: "Wajo", address: env("WAJO_ADDRESS", "john-wajo@inkboxmail.test", overrides), apiKey: env("WAJO_API_KEY", "mock-key-wajo", overrides) },
+    travel26Url: stripSlash(env("TRAVEL26_URL", "http://localhost:8095", overrides)),
+    brain,
+    model: env("AGENT_MODEL", "claude-opus-5-5", overrides),
+    shareLocator: env("SHARE_LOCATOR", "true", overrides) !== "false",
+  };
+}

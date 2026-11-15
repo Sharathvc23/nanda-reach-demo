@@ -3,125 +3,186 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
-import { loadConfig, type Config } from "../src/lib/config.js";
-import { buildApp } from "../src/app.js";
+import { buildMock } from "../src/mock/app.js";
+import { loadTravel26Config, type Travel26Config } from "../src/travel26/config.js";
+import { buildTravel26 } from "../src/travel26/app.js";
+import { loadMymuseConfig, type MymuseConfig } from "../src/mymuse/config.js";
+import { buildMymuse } from "../src/mymuse/app.js";
 
 /**
- * The three acts, end to end, against the in-process stand-ins for the Index and InkBox.
- * The resolver and the InkBox client go over real HTTP to the listening server, exactly as
- * they do in live mode; only the two base URLs differ.
+ * The three acts across the two real services, with the mock Index and InkBox in between.
+ * Travel26 and mymuse talk to each other and to the mocks over real HTTP, exactly as in live
+ * mode; only the base URLs differ. The agent runs its scripted brain, so no API key is needed.
  */
-let app: FastifyInstance;
-let config: Config;
-let base: string;
+let mockApp: FastifyInstance;
+let t26App: FastifyInstance;
+let mmApp: FastifyInstance;
+let t26: Travel26Config;
+let mm: MymuseConfig;
 let dataDir: string;
 
-const json = async (method: "GET" | "POST" | "PUT" | "DELETE", url: string, body?: unknown) => {
+const portOf = (app: FastifyInstance): number => {
+  const a = app.server.address();
+  return typeof a === "object" && a ? a.port : 0;
+};
+
+const call = async (base: string, method: "GET" | "POST", url: string, body?: unknown) => {
   const headers: Record<string, string> = { authorization: "Bearer test-admin" };
   if (body !== undefined) headers["content-type"] = "application/json";
-  const res = await fetch(`${base}${url}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  const res = await fetch(`${base}${url}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   return { status: res.status, body: (await res.json()) as any };
 };
 
 beforeAll(async () => {
   dataDir = mkdtempSync(join(tmpdir(), "reach-demo-"));
-  // Listen first on a random port, then build the config around the real address.
-  const probe = loadConfig({ MODE: "mock", DATA_DIR: dataDir, ADMIN_TOKEN: "test-admin", PORT: "0" });
-  const built = await buildApp(probe);
-  await built.app.listen({ port: 0, host: "127.0.0.1" });
-  const addr = built.app.server.address();
-  const port = typeof addr === "object" && addr ? addr.port : 0;
-  await built.app.close();
-  base = `http://127.0.0.1:${port}`;
-  config = loadConfig({ MODE: "mock", DATA_DIR: dataDir, ADMIN_TOKEN: "test-admin", PORT: String(port), PUBLIC_BASE_URL: base });
-  ({ app } = await buildApp(config));
-  await app.listen({ port, host: "127.0.0.1" });
+  const mock = await buildMock();
+  mockApp = mock.app;
+  await mockApp.listen({ port: 0, host: "127.0.0.1" });
+  const mockBase = `http://127.0.0.1:${portOf(mockApp)}`;
+
+  t26 = loadTravel26Config({ MODE: "mock", MOCK_BASE_URL: mockBase, DATA_DIR: join(dataDir, "t26"), ADMIN_TOKEN: "test-admin" });
+  ({ app: t26App } = await buildTravel26(t26));
+  await t26App.listen({ port: 0, host: "127.0.0.1" });
+  t26.publicBaseUrl = `http://127.0.0.1:${portOf(t26App)}`;
+
+  mm = loadMymuseConfig({ MODE: "mock", MOCK_BASE_URL: mockBase, DATA_DIR: join(dataDir, "mm"), ADMIN_TOKEN: "test-admin", AGENT_BRAIN: "scripted", TRAVEL26_URL: t26.publicBaseUrl });
+  ({ app: mmApp } = await buildMymuse(mm));
+  await mmApp.listen({ port: 0, host: "127.0.0.1" });
+  mm.publicBaseUrl = `http://127.0.0.1:${portOf(mmApp)}`;
+
+  mock.seed(mm.locator, `${mm.publicBaseUrl}/.well-known/agent-card.json`);
 });
 
 afterAll(async () => {
-  await app.close();
+  await Promise.all([mmApp.close(), t26App.close(), mockApp.close()]);
   rmSync(dataDir, { recursive: true, force: true });
 });
 
 describe("the three acts", () => {
-  it("serves poppy.json and an A2A-shaped card", async () => {
-    const poppy = await json("GET", "/poppy.json");
-    expect(poppy.status).toBe(200);
-    expect(poppy.body.contact_policy.stores).toEqual(["nanda_locator"]);
-    const card = await json("GET", "/cards/john");
+  it("Travel26 publishes poppy.json and mymuse publishes its identity and card", async () => {
+    const poppy = await call(t26.publicBaseUrl, "GET", "/.well-known/poppy.json");
+    expect(poppy.body.protocol_version).toBe("1.0");
+    expect(poppy.body.organization.domain).toBe(new URL(t26.publicBaseUrl).host);
+    expect(poppy.body.apis[0].type).toBe("mcp");
+    expect(poppy.body.extensions["nandaindex.org/reach"][0].version).toBe("1");
+    const prm = await fetch(`${t26.publicBaseUrl}/.well-known/oauth-protected-resource`);
+    expect(prm.status).toBe(404);
+    const client = await call(mm.publicBaseUrl, "GET", "/poppy/client.json");
+    expect(client.body.client_id).toBe(`${mm.publicBaseUrl}/poppy/client.json`);
+    expect(client.body.token_endpoint_auth_method).toBe("private_key_jwt");
+    expect(client.body.nanda_locator).toBe(mm.locator);
+    const jwks = await call(mm.publicBaseUrl, "GET", "/poppy/jwks.json");
+    expect(jwks.body.keys[0].kty).toBe("EC");
+    expect(jwks.body.keys[0].d).toBeUndefined();
+    const card = await call(mm.publicBaseUrl, "GET", "/.well-known/agent-card.json");
+    expect(card.body.kind).toBe("personal");
     expect(card.body.version).toBe("1");
     expect(card.body.protocolVersion).toBe("1.0");
     expect(card.body.agents.map((a: any) => a.id)).toEqual(["muse"]);
+    expect(card.body.nanda.locator).toBe(mm.locator);
   });
 
-  it("act 1: Travel26 stores only the locator", async () => {
-    const r = await json("POST", "/demo/act1");
+  it("Travel26 refuses MCP calls without a verified Poppy Session", async () => {
+    const noHeaders = await fetch(`${t26.publicBaseUrl}/mcp`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+    expect(noHeaders.status).toBe(400);
+    expect(((await noHeaders.json()) as any).error).toBe("version_unsupported");
+    const noSession = await fetch(`${t26.publicBaseUrl}/mcp`, { method: "POST", headers: { "content-type": "application/json", "poppy-version": "1.0" }, body: "{}" });
+    expect(noSession.status).toBe(400);
+    expect(((await noSession.json()) as any).error).toBe("invalid_session");
+    const forged = await fetch(`${t26.publicBaseUrl}/mcp`, { method: "POST", headers: { "content-type": "application/json", "poppy-version": "1.0", "poppy-session": "eyJhbGciOiJFUzI1NiJ9.e30.c2ln" }, body: "{}" });
+    expect(forged.status).toBe(400);
+  });
+
+  it("act 1: John asks mymuse to shop; Travel26 stores only the locator", async () => {
+    const r = await call(mm.publicBaseUrl, "POST", "/chat", { message: "Find me flights to Lisbon in December on Travel26" });
     expect(r.status).toBe(200);
-    expect(r.body.inventory.length).toBeGreaterThan(0);
-    const known = await json("GET", "/travel26/known-agents");
+    expect(r.body.ok).toBe(true);
+    expect(r.body.steps.map((s: any) => s.tool)).toEqual(["discover_company", "shop_with_company"]);
+    expect(r.body.reply).toMatch(/Lisbon/);
+    const known = await call(t26.publicBaseUrl, "GET", "/known-agents");
     expect(known.body).toHaveLength(1);
-    expect(known.body[0].locator).toBe(config.john.locator);
-    expect(JSON.stringify(known.body)).not.toContain("inkboxmail");
+    expect(known.body[0].client_id).toBe(`${mm.publicBaseUrl}/poppy/client.json`);
+    expect(known.body[0].client_name).toBe("mymuse");
+    expect(known.body[0].sub).toMatch(/^[A-Za-z0-9_-]{22}$/);
+    expect(known.body[0].nanda_locator).toBe(mm.locator);
+    expect(known.body[0].context).toMatch(/Lisbon/);
+    // The locator is derived from the Muse address by NANDA's own rule; nothing else about the inboxes is stored.
+    expect(Object.keys(known.body[0])).not.toEqual(expect.arrayContaining(["address", "inbox", "card"]));
+    expect(JSON.stringify(known.body)).not.toContain(mm.wajo.address);
+    expect(JSON.stringify(known.body)).not.toContain("routing");
   });
 
-  it("rejects a non-locator", async () => {
-    const r = await json("POST", "/travel26/inventory", { locator: "john@example.test" });
-    expect(r.status).toBe(400);
+  it("a second shop reuses the same Poppy Session and User ID", async () => {
+    const before = (await call(t26.publicBaseUrl, "GET", "/known-agents")).body[0];
+    await call(mm.publicBaseUrl, "POST", "/chat", { message: "Any hotels in Lisbon?" });
+    const after = (await call(t26.publicBaseUrl, "GET", "/known-agents")).body;
+    expect(after).toHaveLength(1);
+    expect(after[0].sub).toBe(before.sub);
+    expect(after[0].sessions).toBe(1);
+    expect(after[0].requests).toBeGreaterThan(before.requests);
   });
 
   it("act 2: with card v1 the promotion lands in Muse", async () => {
-    const r = await json("POST", "/travel26/promo");
+    const r = await call(t26.publicBaseUrl, "POST", "/promo");
     expect(r.body.sent).toBe(1);
     const d = r.body.results[0];
     expect(d.card_version).toBe("1");
     expect(d.delivered_to.agent).toBe("muse");
     expect(d.trace.some((t: string) => t.startsWith("Index: GET"))).toBe(true);
-    const muse = await json("GET", "/demo/inbox/muse");
-    const wajo = await json("GET", "/demo/inbox/wajo");
+    const muse = await call(mm.publicBaseUrl, "GET", "/inbox/muse");
+    const wajo = await call(mm.publicBaseUrl, "GET", "/inbox/wajo");
     expect(muse.body.items).toHaveLength(1);
-    expect(muse.body.items[0].from_address).toBe(config.travel26.address);
+    expect(muse.body.items[0].from_address).toBe(t26.address);
     expect(wajo.body.items).toHaveLength(0);
   });
 
-  it("act 3: John publishes card v2 and Travel26 is not told", async () => {
-    const before = await json("GET", "/travel26/known-agents");
-    const r = await json("PUT", "/cards/john/version", { version: 2 });
-    expect(r.body.version).toBe("2");
-    expect(r.body.routing[0]).toMatchObject({ match: "travel", deliver_to: "wajo" });
-    const after = await json("GET", "/travel26/known-agents");
+  it("mymuse can read the promotion from its own inbox", async () => {
+    const r = await call(mm.publicBaseUrl, "POST", "/chat", { message: "Check my inbox" });
+    expect(r.body.steps.map((s: any) => s.tool)).toEqual(["check_inbox"]);
+    expect(r.body.reply).toMatch(/Lisbon/);
+  });
+
+  it("act 3: John tells mymuse to route travel via Wajo; Travel26 is not told", async () => {
+    const before = await call(t26.publicBaseUrl, "GET", "/known-agents");
+    const r = await call(mm.publicBaseUrl, "POST", "/chat", { message: `I've added a second agent on Wajo at ${mm.wajo.address}. Route travel related messages via Wajo instead of Muse.` });
+    expect(r.body.steps.map((s: any) => s.tool)).toEqual(["add_agent", "set_routing", "get_my_card"]);
+    const card = await call(mm.publicBaseUrl, "GET", "/.well-known/agent-card.json");
+    expect(card.body.agents.map((a: any) => a.id)).toEqual(["muse", "wajo"]);
+    expect(card.body.routing[0]).toMatchObject({ match: "travel", deliver_to: "wajo" });
+    expect(Number(card.body.version)).toBeGreaterThan(1);
+    const after = await call(t26.publicBaseUrl, "GET", "/known-agents");
     expect(after.body).toEqual(before.body);
   });
 
   it("act 2 again: the same locator now lands in Wajo, Muse unchanged", async () => {
-    const r = await json("POST", "/travel26/promo", { subject: "Second promotion" });
+    const r = await call(t26.publicBaseUrl, "POST", "/promo", { subject: "Second promotion" });
     const d = r.body.results[0];
-    expect(d.card_version).toBe("2");
     expect(d.delivered_to.agent).toBe("wajo");
-    const muse = await json("GET", "/demo/inbox/muse");
-    const wajo = await json("GET", "/demo/inbox/wajo");
+    expect(d.trace.join("\n")).toMatch(/rule "travel"/);
+    const muse = await call(mm.publicBaseUrl, "GET", "/inbox/muse");
+    const wajo = await call(mm.publicBaseUrl, "GET", "/inbox/wajo");
     expect(muse.body.items).toHaveLength(1);
     expect(wajo.body.items).toHaveLength(1);
     expect(wajo.body.items[0].subject).toBe("Second promotion");
   });
 
-  it("a non-travel message still goes to Muse under card v2", async () => {
-    const r = await json("POST", "/travel26/promo", { subject: "Receipt", topics: ["billing"] });
+  it("a non-travel message still goes to Muse under the new card", async () => {
+    const r = await call(t26.publicBaseUrl, "POST", "/promo", { subject: "Receipt", topics: ["billing"] });
     expect(r.body.results[0].delivered_to.agent).toBe("muse");
   });
 
   it("admin endpoints need the token", async () => {
-    const res = await fetch(`${base}/travel26/promo`, { method: "POST" });
-    expect(res.status).toBe(401);
+    expect((await fetch(`${t26.publicBaseUrl}/promo`, { method: "POST" })).status).toBe(401);
+    expect((await fetch(`${mm.publicBaseUrl}/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: "hi" }) })).status).toBe(401);
   });
 
-  it("reset returns to card v1 with no known agents", async () => {
-    await json("POST", "/demo/reset");
-    const s = await json("GET", "/demo/state");
-    expect(s.body.card.version).toBe("1");
-    expect(s.body.known_agents).toEqual([]);
+  it("reset returns both services to the start", async () => {
+    await call(mm.publicBaseUrl, "POST", "/reset");
+    await call(t26.publicBaseUrl, "POST", "/reset");
+    const card = await call(mm.publicBaseUrl, "GET", "/.well-known/agent-card.json");
+    expect(card.body.version).toBe("1");
+    expect(card.body.agents).toHaveLength(1);
+    const known = await call(t26.publicBaseUrl, "GET", "/known-agents");
+    expect(known.body).toEqual([]);
   });
 });

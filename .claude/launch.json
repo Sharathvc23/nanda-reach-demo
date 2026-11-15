@@ -2,16 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "demo-mock",
+      "name": "dev-all",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["node_modules/tsx/dist/cli.mjs", "src/main.ts", "--mock"],
-      "port": 8095
-    },
-    {
-      "name": "demo-live",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["--env-file=.env.live", "node_modules/tsx/dist/cli.mjs", "src/main.ts"],
-      "port": 8095
+      "runtimeArgs": [
+        "node_modules/tsx/dist/cli.mjs",
+        "src/dev.ts"
+      ],
+      "port": 8096
     }
   ]
 }

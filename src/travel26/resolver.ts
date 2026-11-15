@@ -1,10 +1,9 @@
-import type { Config } from "./config.js";
-import { routeCard, type AgentCard, type CardAgent, type RoutingRule } from "../cards/john.js";
+import { routeCard, type AgentCard, type CardAgent, type RoutingRule } from "../shared/card.js";
 
 /**
- * The merchant-side resolution chain. Travel26 stores only a NANDA locator. Every time it
- * wants to reach the person it does the whole chain again, so whatever the person changed on
- * their card since last time is honoured.
+ * The merchant-side resolution chain. Travel26 stores only a NANDA locator. Every time it wants
+ * to reach the person it runs the whole chain again, so whatever the person changed on their
+ * card since last time is honoured.
  *
  *   locator  --Index resolve-->  entry.registry_url  --fetch-->  card  --routing-->  inbox
  */
@@ -19,22 +18,16 @@ export interface Resolution {
 
 interface IndexResolveResponse {
   match?: string;
-  identifier?: string;
-  entry?: {
-    url?: string;
-    registry_url?: string;
-    displayName?: string;
-    extensions?: Record<string, { status?: string }>;
-  };
+  entry?: { url?: string; registry_url?: string; extensions?: Record<string, { status?: string }> };
 }
 
-export async function resolveLocator(config: Config, locator: string, topics: string[], fetchFn: typeof fetch = fetch): Promise<Resolution> {
+export async function resolveLocator(indexBaseUrl: string, locator: string, topics: string[], fetchFn: typeof fetch = fetch): Promise<Resolution> {
   const trace: string[] = [];
-  const indexUrl = `${config.indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(locator)}`;
+  const indexUrl = `${indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(locator)}`;
   const out: Resolution = { locator, index_url: indexUrl, card_url: null, card: null, target: null, trace };
 
   trace.push(`Index: GET ${indexUrl}`);
-  const res = await fetchFn(indexUrl, { headers: { accept: "application/json", "user-agent": "travel26 poppy/0.1" }, signal: AbortSignal.timeout(10_000) });
+  const res = await fetchFn(indexUrl, { headers: { accept: "application/json", "user-agent": "travel26/0.1" }, signal: AbortSignal.timeout(10_000) });
   if (!res.ok) {
     trace.push(`Index answered ${res.status}`);
     return out;
@@ -54,11 +47,11 @@ export async function resolveLocator(config: Config, locator: string, topics: st
   }
   const card = (await cres.json()) as AgentCard;
   out.card = card;
-  trace.push(`Card: version ${card.version}, ${card.agents?.length ?? 0} agent(s), ${card.routing?.length ?? 0} rule(s)`);
   if (!Array.isArray(card.agents) || !Array.isArray(card.routing)) {
-    trace.push("Card has no agents/routing; cannot route");
+    trace.push("Card has no agents/routing fields; cannot route");
     return out;
   }
+  trace.push(`Card: version ${card.version}, ${card.agents.length} agent(s), ${card.routing.length} rule(s)`);
   const target = routeCard(card, topics);
   if (!target) {
     trace.push(`No rule matched topics [${topics.join(", ")}]`);

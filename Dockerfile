@@ -13,7 +13,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY --from=build /app/dist ./dist
 COPY public ./public
-ENV PORT=8095 HOST=0.0.0.0 DATA_DIR=/data
+ENV PORT=8095 HOST=0.0.0.0 DATA_DIR=/data SERVICE=travel26
 VOLUME ["/data"]
 EXPOSE 8095
-CMD ["node", "dist/main.js"]
+# SERVICE=travel26 or SERVICE=mymuse picks which service this container runs.
+CMD ["sh", "-c", "node dist/main-${SERVICE}.js"]

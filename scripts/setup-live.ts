@@ -10,7 +10,7 @@
  *   tsx scripts/setup-live.ts verify muse --code 123456
  *   tsx scripts/setup-live.ts signup wajo --human-email you@example.com --handle johnwajo
  *   ...
- *   tsx scripts/setup-live.ts index-register --card-url https://<railway host>/cards/john
+ *   tsx scripts/setup-live.ts index-register --card-url https://<mymuse host>/.well-known/agent-card.json
  *   tsx scripts/setup-live.ts status
  *   tsx scripts/setup-live.ts env --public-base-url https://<railway host>
  *
@@ -242,13 +242,13 @@ async function indexRegister(): Promise<void> {
 
   // 3. The entry, pointing at the card this service hosts.
   const identifier = `urn:air:host39.org:personal:${muse.email_address}`;
-  const orgId = `inkbox-${muse.agent_handle}`;
+  const orgId = "mymuse";
   s.index.identifier = identifier;
   s.index.org_id = orgId;
   if (!s.index.registered) {
     const body = {
       org_id: orgId,
-      display_name: "John",
+      display_name: "mymuse",
       hosting_path: "personal",
       contact_email: muse.email_address,
       registry_url: cardUrl,
