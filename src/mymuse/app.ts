@@ -77,15 +77,17 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
 
   app.get("/chat", async () => store.state.chat);
 
+  /** The inbox of an agent on the card. The address comes from the card; a key is used only when this host holds one for that address. */
   app.get<{ Params: { agent: string } }>("/inbox/:agent", async (req, reply) => {
-    const box = req.params.agent === "muse" ? config.muse : req.params.agent === "wajo" ? config.wajo : null;
-    if (!box) return reply.code(404).send({ error: "agent must be muse or wajo" });
-    // A mailbox whose key this host does not hold belongs to a real agent (Meta's Muse); it reads its own inbox.
-    if (!box.apiKey) return { agent: req.params.agent, address: box.address, items: [], error: `This mailbox belongs to the real ${box.harness} agent. Read it in ${box.harness}.` };
+    const agent = store.state.agents.find((a) => a.id === req.params.agent);
+    if (!agent) return reply.code(404).send({ error: "no such agent on the card" });
+    const address = agent.inbox.address;
+    const key = [config.muse, config.wajo].find((m) => m.address === address && m.apiKey)?.apiKey;
+    if (!key) return { agent: agent.id, address, items: [], error: `Read in ${agent.harness}.` };
     try {
-      return { agent: req.params.agent, address: box.address, items: await inkbox.listInbound(box, 20) };
+      return { agent: agent.id, address, items: await inkbox.listInbound({ address, apiKey: key }, 20) };
     } catch (e) {
-      return reply.code(502).send({ agent: req.params.agent, address: box.address, error: (e as Error).message, items: [] });
+      return reply.code(502).send({ agent: agent.id, address, error: (e as Error).message, items: [] });
     }
   });
 
