@@ -39,7 +39,7 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
     service: "mymuse",
     mode: config.mode,
     brain: config.brain,
-    model: config.brain === "claude" ? config.model : null,
+    model: config.brain === "llm" ? config.model : null,
     public_base_url: config.publicBaseUrl,
     index_base_url: config.indexBaseUrl,
     inkbox_base_url: config.inkboxBaseUrl,

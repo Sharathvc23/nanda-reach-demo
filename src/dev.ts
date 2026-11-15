@@ -1,7 +1,7 @@
 /**
  * Local all-in-one runner: the mock Index and InkBox on 8097, Travel26 on 8095, mymuse on 8096.
  * `npm run dev` (always mock; the live services are deployed, not run from here). The agent's
- * brain is Claude when ANTHROPIC_API_KEY is set, scripted otherwise; AGENT_BRAIN overrides.
+ * brain is the LLM when a model API key is set, scripted otherwise; AGENT_BRAIN overrides.
  */
 import { buildMock } from "./mock/app.js";
 import { loadTravel26Config } from "./travel26/config.js";

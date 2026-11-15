@@ -193,7 +193,7 @@
   document.querySelectorAll("[data-say]").forEach((b)=>b.onclick=()=>say(b.getAttribute("data-say")));
   $("say-wajo").onclick=()=>say("I've added a second agent on Wajo at "+(cfg?cfg.wajo.address:"")+". Route travel related messages via Wajo instead of Muse.");
   $("reset").onclick=async()=>{setStatus("Resetting…"); try{await api("POST","/reset"); setStatus("Back to card v1."); await refresh();}catch(e){setStatus("Failed: "+e.message,true);}};
-  (async()=>{cfg=await api("GET","/config"); $("brain").textContent=cfg.brain==="claude"?"Claude · "+cfg.model:"scripted brain"; $("foot").innerHTML="Index "+esc(cfg.index_base_url)+" · InkBox "+esc(cfg.inkbox_base_url)+" · default company <a href=\""+esc(cfg.travel26_url)+"\" target=\"_blank\" rel=\"noopener\">"+esc(cfg.travel26_url.replace(/^https?:\/\//,""))+"</a> · card connector for other agents "+esc(cfg.card_mcp_url)+(cfg.admin_required?" · admin token required to act":""); await refresh(); setInterval(refresh,12000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
+  (async()=>{cfg=await api("GET","/config"); $("brain").textContent=cfg.brain==="llm"?"model · "+cfg.model:"scripted brain"; $("foot").innerHTML="Index "+esc(cfg.index_base_url)+" · InkBox "+esc(cfg.inkbox_base_url)+" · default company <a href=\""+esc(cfg.travel26_url)+"\" target=\"_blank\" rel=\"noopener\">"+esc(cfg.travel26_url.replace(/^https?:\/\//,""))+"</a> · card connector for other agents "+esc(cfg.card_mcp_url)+(cfg.admin_required?" · admin token required to act":""); await refresh(); setInterval(refresh,12000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
 })();
 </script>
 </body>

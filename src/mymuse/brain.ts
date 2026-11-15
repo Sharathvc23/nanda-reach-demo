@@ -29,7 +29,7 @@ const systemPrompt = (config: MymuseConfig) =>
     `Reply to ${config.owner} in two to four short sentences of plain prose. Say what you did and what you found. No markdown headers or bullet lists.`,
   ].join("\n");
 
-export class ClaudeBrain implements Brain {
+export class LlmBrain implements Brain {
   private readonly client = new Anthropic();
   constructor(private readonly config: MymuseConfig) {}
 
@@ -134,5 +134,5 @@ export class ScriptedBrain implements Brain {
 }
 
 export function makeBrain(config: MymuseConfig): Brain {
-  return config.brain === "claude" ? new ClaudeBrain(config) : new ScriptedBrain(config);
+  return config.brain === "llm" ? new LlmBrain(config) : new ScriptedBrain(config);
 }

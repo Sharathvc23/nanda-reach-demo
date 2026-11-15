@@ -39,8 +39,8 @@ John's personal agent, **mymuse**, speaks Poppy. **Travel26** is a Poppy company
 
 John's locator is `urn:air:host39.org:personal:<his first InkBox address>` and never changes.
 
-mymuse's brain is Claude (`claude-opus-5-5` by default) through the Anthropic SDK's tool runner
-when `ANTHROPIC_API_KEY` is set, with tools for discovering companies, shopping through Poppy,
+mymuse's brain is a hosted language model, chosen with `AGENT_MODEL`, driven through a tool runner
+when the model API key is set, with tools for discovering companies, shopping through Poppy,
 reading its inbox and editing its card. Without a key it runs a scripted brain that covers the
 same three intents, which is what the tests use. Meta's Muse looks for Poppy on every site it
 visits, so Travel26 works with real Muse as it is; mymuse exists because Muse has no API to drive
@@ -69,7 +69,7 @@ Requirements: Node 22.
 ```bash
 npm install
 npm test        # the three acts across both services, with in-process stand-ins for Index and InkBox
-npm run dev     # Travel26 on :8095, mymuse on :8096, stand-ins on :8097, scripted brain unless ANTHROPIC_API_KEY is set
+npm run dev     # Travel26 on :8095, mymuse on :8096, stand-ins on :8097, scripted brain unless a model API key is set
 ```
 
 Open http://localhost:8096 (John's side) and http://localhost:8095 (the merchant desk) side by side.

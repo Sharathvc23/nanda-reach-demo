@@ -1,7 +1,7 @@
 import { env, loadShared, stripSlash, type Overrides, type SharedConfig } from "../shared/env.js";
 import type { Mailbox } from "../shared/inkbox.js";
 
-export type Brain = "claude" | "scripted";
+export type Brain = "llm" | "scripted";
 
 export interface MymuseConfig extends SharedConfig {
   owner: string;
@@ -22,7 +22,7 @@ export interface MymuseConfig extends SharedConfig {
 export function loadMymuseConfig(overrides: Overrides = {}): MymuseConfig {
   const museAddress = env("MYMUSE_ADDRESS", "john-muse@inkboxmail.test", overrides);
   const brainSetting = env("AGENT_BRAIN", "", overrides);
-  const brain: Brain = brainSetting === "scripted" || brainSetting === "claude" ? brainSetting : process.env.ANTHROPIC_API_KEY ? "claude" : "scripted";
+  const brain: Brain = brainSetting === "scripted" || brainSetting === "llm" ? brainSetting : process.env.ANTHROPIC_API_KEY ? "llm" : "scripted";
   const shared = loadShared(8096, overrides);
   const mode = shared.mode;
   return {
