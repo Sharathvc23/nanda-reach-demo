@@ -56,11 +56,8 @@ export async function buildMock(): Promise<MockApp> {
     };
   });
 
-  // InkBox agent cards for mailboxes: any handle exists except an attacker's.
-  app.get<{ Params: { handle: string } }>("/inkbox/a2a/:handle/card", async (req, reply) => {
-    if (/^attacker/i.test(req.params.handle)) return reply.code(404).send({ error: "not found" });
-    return { name: `@${req.params.handle}`, description: "mock InkBox agent card", version: "1" };
-  });
+  // InkBox agent cards for mailboxes.
+  app.get<{ Params: { handle: string } }>("/inkbox/a2a/:handle/card", async (req) => ({ name: `@${req.params.handle}`, description: "mock InkBox agent card", version: "1" }));
 
   // Index account and entry update, enough for the attack controls.
   app.post("/index/auth/login", async () => ({ token: "mock-index-token" }));
