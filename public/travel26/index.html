@@ -15,19 +15,19 @@
   .token { margin-left:auto; display:flex; gap:6px; align-items:center; color:var(--muted); font-size:13px; } .token input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); width:150px; }
   .status { color:var(--muted); font-size:13px; min-height:22px; padding:0 16px 6px; max-width:1240px; margin:0 auto; } .status.err { color:var(--warn); }
   main { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.4fr); gap:12px; padding-bottom:24px; } @media (max-width:900px) { main { grid-template-columns:1fr; } }
-  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; min-height:200px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; min-height:200px; box-shadow:0 1px 2px rgba(0,0,0,.04); min-width:0; }
   h2 { margin:0 0 8px; font-size:15px; font-weight:650; }
   .row { border-top:1px solid var(--line); padding:9px 0; } .row:first-child { border-top:0; }
   .k { color:var(--muted); font-size:12.5px; } code { background:var(--soft); border:1px solid var(--line); padding:1px 5px; border-radius:4px; font-size:12px; word-break:break-all; }
   .chip { display:inline-block; background:var(--chip); border-radius:999px; padding:2px 9px; font-size:12px; margin-right:4px; } .chip.ok { color:var(--ok); background:#f0fdf4; } .chip.no { color:var(--warn); background:#fff7ed; }
   .dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; } .dot.muse { background:var(--muse);} .dot.wajo { background:var(--wajo);} .dot.other { background:var(--muted);} .dot.none { background:transparent; border:2px solid var(--warn); }
-  .reach { margin-top:6px; font-size:14px; } .reach b { font-weight:650; }
-  .sends { display:grid; grid-template-columns:1fr 1fr; gap:8px; } @media (max-width:1100px) { .sends { grid-template-columns:1fr; } }
+  .reach { margin-top:6px; font-size:14px; overflow-wrap:anywhere; } #known code { display:inline-block; max-width:100%; white-space:normal; line-height:1.4; } .reach b { font-weight:650; }
+  .sends { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; } @media (max-width:1100px) { .sends { grid-template-columns:1fr; } }
   .lbl { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:0 0 4px; }
-  .send { border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--soft); } .send.cur { background:var(--panel); border-color:var(--accent); } .send .s { font-weight:650; font-size:13.5px; } .send .m { color:var(--muted); font-size:12px; margin:2px 0 4px; }
-  .trace { font:11.5px/1.45 Consolas, "Courier New", monospace; color:var(--muted); white-space:pre-wrap; } .trace div { padding:0 3px; border-radius:3px; } .trace .hit { color:var(--ok); } .trace .err { color:var(--warn); } .trace .chg { background:var(--hl); color:var(--ink); }
+  .send { border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--soft); min-width:0; overflow-wrap:anywhere; } .send.cur { background:var(--panel); border-color:var(--accent); } .send .s { font-weight:650; font-size:13.5px; } .send .m { color:var(--muted); font-size:12px; margin:2px 0 4px; }
+  .trace { font:11.5px/1.45 Consolas, "Courier New", monospace; color:var(--muted); white-space:pre-wrap; overflow-wrap:anywhere; } .trace div { padding:0 3px; border-radius:3px; } .trace .hit { color:var(--ok); } .trace .err { color:var(--warn); } .trace .chg { background:var(--hl); color:var(--ink); }
   .empty { color:var(--muted); font-style:italic; padding:6px 0; }
-  pre { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px; font:12px/1.4 Consolas, "Courier New", monospace; overflow:auto; max-height:300px; margin:8px 0 0; }
+  pre { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px; font:12px/1.4 Consolas, "Courier New", monospace; overflow:auto; max-height:420px; margin:8px 0 0; }
   footer { color:var(--muted); font-size:12.5px; padding-bottom:24px; } a { color:var(--accent); }
 </style>
 </head>
