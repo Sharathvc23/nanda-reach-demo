@@ -67,6 +67,10 @@ export class AgentTools {
   }
 
   async checkInbox(): Promise<string> {
+    if (!this.config.muse.apiKey) {
+      // The mailbox belongs to a real agent whose key this host does not hold; that agent reads it itself.
+      return this.record("check_inbox", { mailbox: this.config.muse.address }, { count: 0, messages: [], note: `This mailbox is read inside ${this.config.muse.harness}; this host has no key for it.` });
+    }
     try {
       const items = await this.inkbox.listInbound({ address: this.config.muse.address, apiKey: this.config.muse.apiKey }, 10);
       const summary = items.map((m) => ({ from: m.from_address, subject: m.subject, at: m.created_at, preview: (m.body_text ?? m.snippet ?? "").slice(0, 300) }));
