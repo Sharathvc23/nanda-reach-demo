@@ -5,96 +5,58 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Reach John Demo</title>
 <style>
-  :root { --bg:#f5f7fa; --panel:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --accent-ink:#ffffff; --merchant:#0d9488; --warn:#c2410c; --ok:#15803d; --chip:#eef2ff; --muse:#7c3aed; --wajo:#ea580c; --soft:#f9fafb; }
+  :root { --bg:#f5f7fa; --panel:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --accent-ink:#ffffff; --merchant:#0d9488; --warn:#c2410c; --ok:#15803d; --chip:#eef2ff; --muse:#7c3aed; --wajo:#ea580c; --soft:#f9fafb; --hl:#fff3bf; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
   .wrap { max-width:1500px; margin:0 auto; padding:0 16px; }
-  header { padding:18px 0 4px; display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 16px; }
+  header { padding:18px 0 4px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; }
   h1 { margin:0; font-size:22px; font-weight:650; letter-spacing:-0.01em; }
-  header p { margin:0; color:var(--muted); }
-  .status { color:var(--muted); font-size:13px; min-height:22px; padding:4px 0; }
-  .status.err { color:var(--warn); }
-
+  .status { color:var(--muted); font-size:13px; min-height:22px; padding:4px 0; } .status.err { color:var(--warn); }
   .pipe { display:grid; grid-template-columns:repeat(4, 1fr); background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin:8px 0 14px; }
-  .step { padding:12px 16px; border-right:1px solid var(--line); position:relative; }
-  .step:last-child { border-right:0; }
+  .step { padding:12px 16px; border-right:1px solid var(--line); position:relative; } .step:last-child { border-right:0; }
   .step .n { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; }
-  .step .t { font-weight:650; margin:2px 0 3px; font-size:14.5px; }
-  .step .v { font-size:12.5px; color:var(--muted); word-break:break-all; }
-  .step .v strong { color:var(--ink); font-weight:600; }
-  .step::after { content:"›"; position:absolute; right:-7px; top:50%; transform:translateY(-50%); background:var(--panel); color:var(--muted); font-size:22px; line-height:1; z-index:1; }
-  .step:last-child::after { content:""; }
-  .pill { display:inline-block; border-radius:999px; padding:1px 8px; font-size:12px; font-weight:600; background:var(--chip); color:var(--accent); }
-  .pill.fixed { background:#ecfdf5; color:var(--ok); }
-
+  .step .t { font-weight:650; margin:2px 0 3px; font-size:14.5px; } .step .v { font-size:12.5px; color:var(--muted); word-break:break-all; } .step .v strong { color:var(--ink); font-weight:600; }
+  .step::after { content:"›"; position:absolute; right:-7px; top:50%; transform:translateY(-50%); background:var(--panel); color:var(--muted); font-size:22px; line-height:1; z-index:1; } .step:last-child::after { content:""; }
+  .pill { display:inline-block; border-radius:999px; padding:1px 8px; font-size:12px; font-weight:600; background:var(--chip); color:var(--accent); } .pill.fixed { background:#ecfdf5; color:var(--ok); } .pill.bad { background:#fff1ec; color:var(--warn); }
   main { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr); gap:14px; align-items:start; padding-bottom:28px; }
-  @media (max-width: 1100px) { main { grid-template-columns:1fr 1fr; } }
-  @media (max-width: 760px) { main { grid-template-columns:1fr; } .pipe { grid-template-columns:1fr 1fr; } .step::after { content:""; } .step { border-bottom:1px solid var(--line); } }
+  @media (max-width: 1100px) { main { grid-template-columns:1fr 1fr; } } @media (max-width: 760px) { main { grid-template-columns:1fr; } .pipe { grid-template-columns:1fr 1fr; } .step::after { content:""; } .step { border-bottom:1px solid var(--line); } }
   section { background:var(--panel); border:1px solid var(--line); border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
-  .hd { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px 10px; border-bottom:1px solid var(--line); }
-  .hd h2 { margin:0; font-size:15.5px; font-weight:650; display:flex; align-items:center; gap:8px; }
-  .hd .sub { color:var(--muted); font-size:12.5px; }
+  .hd { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px 10px; border-bottom:1px solid var(--line); } .hd h2 { margin:0; font-size:15.5px; font-weight:650; display:flex; align-items:center; gap:8px; } .hd .sub { color:var(--muted); font-size:12.5px; font-weight:400; }
   .bd { padding:14px 16px; }
-  .sq { width:12px; height:12px; border-radius:3px; display:inline-block; }
-  .sq.merchant { background:var(--merchant); } .sq.agent { background:var(--accent); }
-
-  .row { border-top:1px solid var(--line); padding:9px 0; }
-  .row:first-child { border-top:0; }
-  .k { color:var(--muted); font-size:12.5px; }
-  code { background:var(--soft); border:1px solid var(--line); padding:1px 5px; border-radius:5px; font-size:12px; word-break:break-all; }
-  .chip { display:inline-block; background:var(--soft); border:1px solid var(--line); border-radius:999px; padding:1px 8px; font-size:12px; margin-right:4px; }
-  .chip.ok { color:var(--ok); border-color:#bbf7d0; background:#f0fdf4; } .chip.no { color:var(--warn); border-color:#fed7aa; background:#fff7ed; }
-  .trace { font:12px/1.45 Consolas, "Courier New", monospace; color:var(--muted); white-space:pre-wrap; margin:6px 0 0; }
-  .trace .hit { color:var(--ok); } .trace .err { color:var(--warn); }
+  .sq { width:12px; height:12px; border-radius:3px; display:inline-block; } .sq.merchant { background:var(--merchant); } .sq.agent { background:var(--accent); }
+  .row { border-top:1px solid var(--line); padding:9px 0; } .row:first-child { border-top:0; }
+  .k { color:var(--muted); font-size:12.5px; } code { background:var(--soft); border:1px solid var(--line); padding:1px 5px; border-radius:5px; font-size:12px; word-break:break-all; }
+  .chip { display:inline-block; background:var(--soft); border:1px solid var(--line); border-radius:999px; padding:1px 8px; font-size:12px; margin-right:4px; } .chip.ok { color:var(--ok); border-color:#bbf7d0; background:#f0fdf4; } .chip.no { color:var(--warn); border-color:#fed7aa; background:#fff7ed; }
+  .lbl { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:10px 0 4px; } .lbl:first-child { margin-top:0; }
   .empty { color:var(--muted); font-style:italic; font-size:13px; }
-  .lbl { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:10px 0 4px; }
-  .lbl:first-child { margin-top:0; }
-
-  button { font:inherit; font-weight:600; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); border-radius:10px; padding:8px 13px; cursor:pointer; font-size:13.5px; }
-  button.merchant { background:var(--merchant); border-color:var(--merchant); }
-  button.secondary { background:var(--panel); color:var(--ink); border-color:var(--line); font-weight:500; }
-  button:disabled { opacity:.5; cursor:progress; }
+  .sends { display:grid; grid-template-columns:1fr 1fr; gap:8px; } @media (max-width:1100px) { .sends { grid-template-columns:1fr; } }
+  .send { border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--soft); } .send.cur { background:var(--panel); border-color:var(--accent); }
+  .send .s { font-weight:650; font-size:13.5px; } .send .m { color:var(--muted); font-size:12px; margin:2px 0 4px; }
+  .trace { font:11.5px/1.45 Consolas, "Courier New", monospace; color:var(--muted); white-space:pre-wrap; } .trace div { padding:0 3px; border-radius:3px; } .trace .hit { color:var(--ok); } .trace .err { color:var(--warn); } .trace .chg { background:var(--hl); color:var(--ink); }
+  button { font:inherit; font-weight:600; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); border-radius:10px; padding:8px 13px; cursor:pointer; font-size:13.5px; } button.secondary { background:var(--panel); color:var(--ink); border-color:var(--line); font-weight:500; } button.merchant { background:var(--merchant); border-color:var(--merchant); } button:disabled { opacity:.5; cursor:progress; }
   .btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-
   .chat { display:flex; flex-direction:column; gap:10px; max-height:440px; overflow:auto; padding:2px 0; }
-  .turn { max-width:90%; padding:9px 12px; border-radius:14px; white-space:pre-wrap; line-height:1.45; font-size:14px; }
-  .turn.user { align-self:flex-end; background:var(--accent); color:var(--accent-ink); border-bottom-right-radius:4px; }
-  .turn.assistant { align-self:flex-start; background:var(--soft); border:1px solid var(--line); border-bottom-left-radius:4px; }
-  .steps { margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; }
-  .steps details { font-size:12px; }
-  .steps summary { cursor:pointer; list-style:none; background:var(--chip); color:var(--accent); border-radius:999px; padding:2px 9px; font-weight:600; }
-  .steps summary.bad { background:#fff1ec; color:var(--warn); }
-  .steps pre { background:var(--bg); border-radius:8px; padding:8px; overflow:auto; max-height:220px; margin:6px 0 0; font:11.5px/1.4 Consolas, "Courier New", monospace; width:min(520px, 80vw); }
-  form { display:flex; gap:8px; margin-top:12px; }
-  input[type=text] { flex:1; font:inherit; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--ink); }
-  .token { display:flex; gap:6px; align-items:center; color:var(--muted); font-size:12.5px; }
-  .token input { font:inherit; padding:4px 8px; border:1px solid var(--line); border-radius:6px; width:150px; }
-
-  .agent { border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin-bottom:10px; }
-  .agent .top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex:none; }
-  .dot.muse { background:var(--muse); } .dot.wajo { background:var(--wajo); } .dot.other { background:var(--muted); }
-  .agent .name { font-weight:650; }
-  .agent .addr { color:var(--muted); font-size:12.5px; word-break:break-all; margin-top:1px; }
-  .gets { margin-top:6px; font-size:13.5px; } .gets b { font-weight:650; }
-  .inbox { margin-top:8px; border-top:1px dashed var(--line); padding-top:6px; }
-  .msg { padding:6px 0; border-top:1px solid var(--line); } .msg:first-of-type { border-top:0; }
-  .msg .s { font-weight:600; font-size:13.5px; } .msg .m { color:var(--muted); font-size:12px; } .msg .b { font-size:13px; margin-top:3px; white-space:pre-wrap; color:#374151; }
-  .new { animation: flash 1.8s ease-out; } @keyframes flash { from { background:#dbeafe; } to { background:transparent; } }
-  .rules { padding:9px 12px; background:var(--soft); border:1px solid var(--line); border-radius:10px; font-size:13.5px; margin-bottom:10px; }
-  .rules div { padding:1px 0; }
-  .note { font-size:12.5px; color:var(--muted); }
-  details.raw summary { cursor:pointer; color:var(--muted); font-size:12.5px; margin-top:8px; }
-  pre.rawcard { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px; font:11.5px/1.4 Consolas, "Courier New", monospace; overflow:auto; max-height:300px; }
-  footer { color:var(--muted); font-size:12.5px; padding:0 0 28px; }
-  a { color:var(--accent); }
+  .turn { max-width:90%; padding:9px 12px; border-radius:14px; white-space:pre-wrap; line-height:1.45; font-size:14px; } .turn.user { align-self:flex-end; background:var(--accent); color:var(--accent-ink); border-bottom-right-radius:4px; } .turn.assistant { align-self:flex-start; background:var(--soft); border:1px solid var(--line); border-bottom-left-radius:4px; }
+  .steps { margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; } .steps details { font-size:12px; } .steps summary { cursor:pointer; list-style:none; background:var(--chip); color:var(--accent); border-radius:999px; padding:2px 9px; font-weight:600; } .steps summary.bad { background:#fff1ec; color:var(--warn); } .steps pre { background:var(--bg); border-radius:8px; padding:8px; overflow:auto; max-height:220px; margin:6px 0 0; font:11.5px/1.4 Consolas, "Courier New", monospace; width:min(520px, 80vw); }
+  form { display:flex; gap:8px; margin-top:12px; } input[type=text] { flex:1; font:inherit; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--ink); }
+  .token { display:flex; gap:6px; align-items:center; color:var(--muted); font-size:12.5px; } .token input { font:inherit; padding:4px 8px; border:1px solid var(--line); border-radius:6px; width:150px; }
+  .agent { border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin-bottom:10px; transition:box-shadow .3s, border-color .3s; } .agent.arrived { border-color:var(--accent); box-shadow:0 0 0 4px rgba(37,99,235,.18); }
+  .agent .top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; } .dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex:none; } .dot.muse { background:var(--muse); } .dot.wajo { background:var(--wajo); } .dot.other { background:var(--muted); } .dot.none { background:transparent; border:2px solid var(--warn); }
+  .agent .name { font-weight:650; } .agent .addr { color:var(--muted); font-size:12.5px; word-break:break-all; margin-top:1px; } .gets { margin-top:6px; font-size:13.5px; } .gets b { font-weight:650; }
+  .inbox { margin-top:8px; border-top:1px dashed var(--line); padding-top:6px; } .msg { padding:6px 0; border-top:1px solid var(--line); border-radius:6px; } .msg:first-of-type { border-top:0; } .msg .s { font-weight:600; font-size:13.5px; } .msg .m { color:var(--muted); font-size:12px; } .msg .b { font-size:13px; margin-top:3px; white-space:pre-wrap; color:#374151; }
+  .msg.new { background:var(--hl); padding:6px 8px; } .msg.new .s::before { content:"NEW "; color:var(--warn); font-size:11px; letter-spacing:.08em; font-weight:700; }
+  .rules { padding:9px 12px; background:var(--soft); border:1px solid var(--line); border-radius:10px; font-size:13.5px; margin-bottom:10px; } .rules div { padding:1px 0; }
+  .note { font-size:12.5px; color:var(--muted); } details.raw summary { cursor:pointer; color:var(--muted); font-size:12.5px; margin-top:8px; } pre.rawcard { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px; font:11.5px/1.4 Consolas, "Courier New", monospace; overflow:auto; max-height:300px; }
+  details.demo { margin-top:14px; } details.demo summary { cursor:pointer; color:var(--muted); font-size:12.5px; } details.demo .btns { margin-top:8px; }
+  footer { color:var(--muted); font-size:12.5px; padding:0 0 28px; } a { color:var(--accent); }
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
   <h1>Reach John</h1>
-  <label class="token" style="margin-left:auto">admin token <input id="token" type="password" placeholder="for the buttons" autocomplete="off" /></label>
+  <a href="/corroboration.html" style="font-size:13px">corroboration demo</a>
+  <label class="token" style="margin-left:auto">admin token <input id="token" type="password" autocomplete="off" /></label>
 </header>
 <div id="status" class="status"></div>
 
@@ -107,12 +69,11 @@
 
 <main>
   <section>
-    <div class="hd"><h2><span class="sq merchant"></span>Travel26</h2><a class="sub" id="t26link" href="#" target="_blank" rel="noopener">open desk</a></div>
+    <div class="hd"><h2><span class="sq merchant"></span>Travel26 <span class="sub">merchant view · read-only</span></h2><a class="sub" id="t26link" href="#" target="_blank" rel="noopener">open desk</a></div>
     <div class="bd">
       <div class="lbl">Known agents</div>
       <div id="known"></div>
-      <div class="btns"><button class="merchant" id="promo">Send promotion</button><button class="secondary" id="promo2">Send another (Kyoto)</button></div>
-      <div class="lbl">Last send</div>
+      <div class="lbl">Sends</div>
       <div id="log"></div>
     </div>
   </section>
@@ -127,13 +88,23 @@
         <button class="secondary" data-say="Check my inbox">Check inbox</button>
         <button class="secondary" id="say-wajo">3 · Route travel via Wajo</button>
         <button class="secondary" data-say="Route travel messages back to Muse. Keep Wajo on my card.">Route back to Muse</button>
-        <button class="secondary" id="reset">Start over</button>
+        <button class="secondary" data-say="Stop sending me promotions">No promotions</button>
+        <button class="secondary" data-say="Allow promotions again">Allow promotions</button>
       </div>
+      <details class="demo"><summary>Demo controls</summary>
+        <div class="btns">
+          <button class="secondary" id="move">Move card to a new URL</button>
+          <button class="secondary" id="moveback">Move card back</button>
+          <button class="merchant" id="promo">Travel26: send promotion</button>
+          <button class="merchant" id="promo2">Travel26: send another</button>
+          <button class="secondary" id="reset">Start over</button>
+        </div>
+      </details>
     </div>
   </section>
 
   <section>
-    <div class="hd"><h2>Card <span class="sub" id="cardv"></span></h2></div>
+    <div class="hd"><h2>John's agents <span class="sub" id="cardv"></span></h2></div>
     <div class="bd">
       <div class="rules" id="rules"></div>
       <div id="agents"></div>
@@ -148,7 +119,6 @@
   const $=(id)=>document.getElementById(id);
   const esc=(s)=>String(s??"").replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const tokenInput=$("token"); try{tokenInput.value=localStorage.getItem("adminToken")||"";}catch{}
-  // A shared link can carry the token: https://host/#token=…  It is stored on first open and removed from the address bar.
   try{const hm=location.hash.match(/[#&]token=([^&]+)/); if(hm){tokenInput.value=decodeURIComponent(hm[1]).trim(); localStorage.setItem("adminToken",tokenInput.value); history.replaceState(null,"",location.pathname+location.search);}}catch{}
   const tokenState=document.createElement("span"); tokenState.style.cssText="font-size:12px;margin-left:6px"; tokenInput.insertAdjacentElement("afterend",tokenState);
   let tokenTimer=null; async function verifyToken(){const v=tokenInput.value.trim(); if(v!==tokenInput.value) tokenInput.value=v; try{localStorage.setItem("adminToken",v);}catch{} if(!v){tokenState.textContent=""; return;} tokenState.textContent="…"; try{const r=await fetch("/admin/check",{headers:{authorization:"Bearer "+v}}); tokenState.textContent=r.ok?"✓ ok":"✗ rejected"; tokenState.style.color=r.ok?"var(--ok)":"var(--warn)";}catch{tokenState.textContent="?";}}
@@ -156,53 +126,70 @@
   const headers=(hasBody)=>{const h={}; if(hasBody) h["content-type"]="application/json"; if(tokenInput.value.trim()) h["authorization"]="Bearer "+tokenInput.value.trim(); return h;};
   const setStatus=(t,err)=>{const el=$("status"); el.textContent=t; el.className="status"+(err?" err":"");};
   async function api(method,url,body){const res=await fetch(url,{method,headers:headers(body!==undefined),body:body===undefined?undefined:JSON.stringify(body)}); const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data.error||(method+" "+url+" -> "+res.status)); return data;}
-  const seen={}; let cfg=null;
-  const dotClass=(id)=>id==="muse"||id==="wajo"?id:"other";
-  const trace=(t)=>'<div class="trace">'+(t||[]).map((x)=>'<div class="'+(/^Route:|^InkBox: sent/.test(x)?"hit":/^Error|^Skipped/.test(x)?"err":"")+'">'+esc(x)+"</div>").join("")+"</div>";
+  const seen={}; const arrivedAt={}; const newIds={}; let cfg=null;
+  const dotClass=(id)=>id==="muse"||id==="wajo"?id:id==="none"?"none":"other";
 
+  // Trace lines of the latest send that differ from the previous send are highlighted.
+  function renderTrace(cur, prev){
+    const prevSet=new Set(prev||[]);
+    return '<div class="trace">'+(cur||[]).map((x)=>{const chg=prev&&!prevSet.has(x)&&!/^Index: GET|^  travel26|^  poppy-identity/.test(x); const cls=(/^Route:|^InkBox: sent|^Corroboration: AGREE/.test(x)?"hit ":"")+(/^Error|^  finding|^Corroboration: DIVERGENT|^Saved-URL merchant: .*(4\d\d|5\d\d|unreachable)/.test(x)?"err ":"")+(chg?"chg":""); return '<div class="'+cls.trim()+'">'+esc(x)+"</div>";}).join("")+"</div>";
+  }
+  function sendCard(d, prev, cur){
+    if(!d) return '<div class="send"><div class="empty">None.</div></div>';
+    const outcome=d.delivered_to?'<span class="chip ok">delivered</span> <span class="dot '+dotClass(d.delivered_to.agent)+'"></span>'+esc(d.delivered_to.agent)+' <span class="k">'+esc(d.delivered_to.address)+'</span>':d.declined?'<span class="chip no">held · declined by card</span>':'<span class="chip no">held</span> <span class="k">'+esc(d.error||"")+'</span>';
+    const naive=d.naive?'<div class="m">saved-URL merchant: '+(d.naive.ok?'<span style="color:var(--ok)">still reaches</span>':'<span style="color:var(--warn)">HTTP '+esc(d.naive.status??"?")+', lost John</span>')+'</div>':'';
+    return '<div class="send'+(cur?" cur":"")+'"><div class="s">'+esc(d.subject)+'</div><div class="m">'+new Date(d.at).toLocaleTimeString()+' · card v'+esc(d.card_version??"?")+(d.verdict?' · '+esc(d.verdict):'')+'</div><div>'+outcome+'</div>'+naive+renderTrace(d.trace, prev?prev.trace:null)+'</div>';
+  }
   function renderMerchant(m){
-    $("t26link").href=m.url;
+    $("t26link").href=m.url; const byLoc={}; (m.reach||[]).forEach((r)=>byLoc[r.locator]=r);
     const known=m.known_agents||[];
-    const byLoc={}; (m.reach||[]).forEach((r)=>byLoc[r.locator]=r);
-    $("known").innerHTML=m.error?'<div class="empty">Merchant unreachable: '+esc(m.error)+'</div>':known.length?known.map((k)=>{const r=k.nanda_locator?byLoc[k.nanda_locator]:null; return '<div class="row"><div><strong>'+esc(k.client_name)+'</strong> <span class="chip">user '+esc(k.sub.slice(0,8))+'…</span> '+(k.nanda_locator?'<span class="chip ok">locator held</span>':'<span class="chip no">no locator</span>')+'</div>'+(r&&r.target?'<div style="margin-top:4px">Travel reaches now: <span class="dot '+dotClass(r.target.agent)+'"></span><b>'+esc(r.target.name)+'</b> <span class="k">'+esc(r.target.address)+' · card v'+esc(r.card_version)+'</span></div>':'')+'<div class="k">'+k.sessions+' session(s) · '+k.requests+' request(s) · '+esc(k.context||"")+'</div></div>';}).join(""):'<div class="empty">Nobody yet.</div>';
-    const log=m.promo_log||[]; const last=log.find((d)=>!(d.trace||[]).some((t)=>/^Skipped/.test(t)))||log[0];
-    $("log").innerHTML=last?'<div class="row"><div><strong>'+esc(last.subject)+'</strong></div><div class="k">'+new Date(last.at).toLocaleTimeString()+' · card v'+esc(last.card_version??"?")+' · '+(last.delivered_to?'delivered to <strong>'+esc(last.delivered_to.agent)+'</strong> '+esc(last.delivered_to.address):'<span style="color:var(--warn)">not delivered</span>')+'</div>'+trace(last.trace)+'</div>':'<div class="empty">None.</div>';
+    $("known").innerHTML=m.error?'<div class="empty">Merchant unreachable: '+esc(m.error)+'</div>':known.length?known.map((k)=>{const r=k.nanda_locator?byLoc[k.nanda_locator]:null; const reach=r?(r.declined?'<div style="margin-top:4px">Travel reaches now: <span class="dot none"></span><b>nobody</b> <span class="k">· declined by the card ('+esc(r.declined)+')</span></div>':r.target?'<div style="margin-top:4px">Travel reaches now: <span class="dot '+dotClass(r.target.agent)+'"></span><b>'+esc(r.target.name)+'</b> <span class="k">'+esc(r.target.address)+' · card v'+esc(r.card_version)+'</span></div>':''):''; return '<div class="row"><div><strong>'+esc(k.client_name)+'</strong> <span class="chip">user '+esc(k.sub.slice(0,8))+'…</span> '+(k.nanda_locator?'<span class="chip ok">locator held</span>':'<span class="chip no">no locator</span>')+'</div>'+reach+'<div class="k">'+k.sessions+' session(s) · '+k.requests+' request(s) · '+esc(k.context||"")+'</div></div>';}).join(""):'<div class="empty">Nobody yet.</div>';
+    const log=(m.promo_log||[]).filter((d)=>!(d.trace||[]).some((t)=>/^Skipped/.test(t)));
+    $("log").innerHTML=log.length?'<div class="sends">'+(log[1]?'<div><div class="lbl">Previous</div>'+sendCard(log[1],null,false)+'</div>':'<div></div>')+'<div><div class="lbl">Latest</div>'+sendCard(log[0],log[1],true)+'</div></div>':'<div class="empty">None.</div>';
   }
   function renderChat(turns){
     $("chat").innerHTML=turns.length?turns.map((t)=>'<div class="turn '+t.role+'">'+esc(t.text)+(t.steps&&t.steps.length?'<div class="steps">'+t.steps.map((s)=>'<details><summary class="'+(s.ok?"":"bad")+'">'+esc(s.tool)+'</summary><pre>'+esc(JSON.stringify(s.input))+"\n\n"+esc(s.output)+'</pre></details>').join("")+"</div>":"")+"</div>").join(""):'<div class="empty">No messages.</div>';
     $("chat").scrollTop=$("chat").scrollHeight;
   }
   const agentFor=(card,id)=>card.agents.find((a)=>a.id===id);
-  const targetFor=(card,topic)=>{for(const r of card.routing){if(r.match==="*"||r.match===topic){const a=agentFor(card,r.deliver_to); if(a) return {rule:r,agent:a};}} return null;};
-  function renderPipe(card){
+  const targetFor=(card,topic)=>{for(const r of card.routing){if(r.match==="*"||r.match===topic){if(r.deliver_to==="none") return {rule:r,agent:null,declined:true}; const a=agentFor(card,r.deliver_to); if(a) return {rule:r,agent:a,declined:false};}} return null;};
+  function renderPipe(card, idx){
     $("p-locator").innerHTML='<code>'+esc(card.nanda.locator)+'</code>';
-    $("p-index").innerHTML='<strong>'+esc(new URL(card.nanda.index).host)+'</strong>';
+    $("p-index").innerHTML='<strong>'+esc(new URL(card.nanda.index).host)+'</strong>'+(idx&&idx.moved?'<br><span class="pill">card moved · entry updated</span>':'');
     $("p-version").textContent="v"+card.version;
-    $("p-card").innerHTML='<strong>'+card.agents.length+' agent'+(card.agents.length===1?"":"s")+'</strong>, '+card.routing.length+' rule'+(card.routing.length===1?"":"s")+' · updated '+new Date(card.updated_at).toLocaleTimeString();
-    const t=targetFor(card,"travel");
-    $("p-target").innerHTML=t?'<span class="dot '+dotClass(t.agent.id)+'"></span> <strong>'+esc(t.agent.name)+'</strong><br>'+esc(t.agent.inbox.address):"no rule matches";
+    $("p-card").innerHTML='<strong>'+card.agents.length+' agent'+(card.agents.length===1?"":"s")+'</strong>, '+card.routing.length+' rule'+(card.routing.length===1?"":"s")+' · updated '+new Date(card.updated_at).toLocaleTimeString()+'<br><span style="font-size:11.5px">'+esc(card.url.replace(/^https?:\/\/[^/]+/,""))+'</span>';
+    const t=targetFor(card,"travel"); const p=targetFor(card,"promotion");
+    $("p-target").innerHTML=(t?(t.declined?'<span class="dot none"></span> <strong>nobody</strong> (declined)':'<span class="dot '+dotClass(t.agent.id)+'"></span> <strong>'+esc(t.agent.name)+'</strong><br>'+esc(t.agent.inbox.address)):"no rule matches")+(p&&p.declined?'<br><span class="pill bad">promotions declined</span>':'');
   }
   function renderCard(card,inboxes){
     $("cardv").textContent="card v"+card.version+" · "+new Date(card.updated_at).toLocaleTimeString();
-    $("rules").innerHTML='<div class="lbl" style="margin-top:0">Routing</div>'+card.routing.map((r)=>{const a=agentFor(card,r.deliver_to); return '<div>'+(r.match==="*"?"Everything else":"Messages about <b>"+esc(r.match)+"</b>")+' → <span class="dot '+dotClass(r.deliver_to)+'"></span> <b>'+esc(a?a.name:r.deliver_to)+'</b></div>';}).join("");
+    $("rules").innerHTML='<div class="lbl" style="margin-top:0">Routing</div>'+card.routing.map((r)=>{const a=agentFor(card,r.deliver_to); return '<div>'+(r.match==="*"?"Everything else":"Messages about <b>"+esc(r.match)+"</b>")+' → '+(r.deliver_to==="none"?'<span class="dot none"></span> <b>nobody</b> <span class="note">· declined</span>':'<span class="dot '+dotClass(r.deliver_to)+'"></span> <b>'+esc(a?a.name:r.deliver_to)+'</b>')+'</div>';}).join("");
+    const now=Date.now();
     $("agents").innerHTML=card.agents.map((a)=>{
       const topics=card.routing.filter((r)=>r.deliver_to===a.id).map((r)=>r.match==="*"?"everything else":r.match);
-      const box=inboxes[a.id]; let inboxHtml;
+      const box=inboxes[a.id]; let inboxHtml; seen[a.id]=seen[a.id]||new Set(); newIds[a.id]=newIds[a.id]||new Set();
       if(!box) inboxHtml='<div class="note">Inbox not shown here.</div>';
       else if(box.error&&!(box.items||[]).length) inboxHtml='<div class="note">'+esc(box.error)+'</div>';
       else if(!(box.items||[]).length) inboxHtml='<div class="empty">Empty.</div>';
-      else { seen[a.id]=seen[a.id]||new Set(); inboxHtml=box.items.slice(0,3).map((m)=>{const isNew=!seen[a.id].has(m.id); return '<div class="msg'+(isNew&&seen[a.id].size?" new":"")+'"><div class="s">'+esc(m.subject)+'</div><div class="m">from '+esc(m.from_address)+' · '+new Date(m.created_at).toLocaleTimeString()+'</div><div class="b">'+esc((m.body_text||m.snippet||"").slice(0,160))+'</div></div>';}).join(""); box.items.forEach((m)=>seen[a.id].add(m.id)); }
-      return '<div class="agent"><div class="top"><span class="dot '+dotClass(a.id)+'"></span><span class="name">'+esc(a.name)+'</span><span class="chip">'+esc(a.harness)+'</span></div><div class="addr">'+esc(a.inbox.address)+'</div><div class="gets">Gets: <b>'+esc(topics.join(", ")||"nothing routed here")+'</b></div><div class="inbox"><div class="lbl">Inbox</div>'+inboxHtml+'</div></div>';
+      else {
+        const fresh=box.items.filter((m)=>!seen[a.id].has(m.id));
+        if(fresh.length&&seen[a.id].size){ arrivedAt[a.id]=now; newIds[a.id]=new Set(fresh.map((m)=>m.id)); }
+        if(arrivedAt[a.id]&&now-arrivedAt[a.id]>25000) newIds[a.id].clear();
+        inboxHtml=box.items.slice(0,3).map((m)=>'<div class="msg'+(newIds[a.id].has(m.id)?" new":"")+'"><div class="s">'+esc(m.subject)+'</div><div class="m">from '+esc(m.from_address)+' · '+new Date(m.created_at).toLocaleTimeString()+'</div><div class="b">'+esc((m.body_text||m.snippet||"").slice(0,160))+'</div></div>').join("");
+        box.items.forEach((m)=>seen[a.id].add(m.id));
+      }
+      const hot=arrivedAt[a.id]&&now-arrivedAt[a.id]<25000;
+      return '<div class="agent'+(hot?" arrived":"")+'"><div class="top"><span class="dot '+dotClass(a.id)+'"></span><span class="name">'+esc(a.name)+'</span><span class="chip">'+esc(a.harness)+'</span></div><div class="addr">'+esc(a.inbox.address)+'</div><div class="gets">Gets: <b>'+esc(topics.join(", ")||"nothing routed here")+'</b></div><div class="inbox"><div class="lbl">Inbox</div>'+inboxHtml+'</div></div>';
     }).join("");
     $("cardmeta").innerHTML="card <code>"+esc(card.url)+"</code><br>Poppy client_id <code>"+esc(card.poppy.client_id)+"</code>";
     $("cardraw").textContent=JSON.stringify(card,null,2);
   }
   async function refresh(){
-    const [state,m]=await Promise.all([api("GET","/state"),fetch("/merchant/state").then((r)=>r.json())]);
+    const [state,m,idx]=await Promise.all([api("GET","/state"),fetch("/merchant/state").then((r)=>r.json()),fetch("/index/status").then((r)=>r.json()).catch(()=>null)]);
     const ids=state.card.agents.map((a)=>a.id);
     const boxes=await Promise.all(ids.map((id)=>fetch("/inbox/"+id).then((r)=>r.json()).catch(()=>({items:[],error:"unavailable"}))));
     const inboxes={}; ids.forEach((id,i)=>inboxes[id]=boxes[i]);
-    renderMerchant(m); renderChat(state.chat); renderPipe(state.card); renderCard(state.card,inboxes);
+    renderMerchant(m); renderChat(state.chat); renderPipe(state.card, idx); renderCard(state.card,inboxes);
   }
   async function run(label,fn){const bs=document.querySelectorAll("button"); bs.forEach((b)=>b.disabled=true); setStatus(label+"…"); try{const out=await fn(); setStatus(label+" done."+(out?" "+out:"")); await refresh();}catch(e){setStatus(label+" failed: "+e.message,true);}finally{bs.forEach((b)=>b.disabled=false);} for(let i=0;i<4;i++){await new Promise((r)=>setTimeout(r,1500)); await refresh().catch(()=>{});}}
   const say=(text)=>run("mymuse",async()=>{const r=await api("POST","/chat",{message:text}); $("input").value=""; return r.ok?"Card v"+r.card_version+".":"see the reply.";});
@@ -210,6 +197,8 @@
   $("form").onsubmit=(e)=>{e.preventDefault(); const t=$("input").value.trim(); if(t) say(t);};
   document.querySelectorAll("[data-say]").forEach((b)=>b.onclick=()=>say(b.getAttribute("data-say")));
   $("say-wajo").onclick=()=>say("I've added a second agent on Wajo at "+(cfg?cfg.wajo.address:"")+". Route travel related messages via Wajo instead of Muse.");
+  $("move").onclick=()=>run("Move card",async()=>{const r=await api("POST","/card/move"); return "now at "+r.card_url+"; Index entry updated.";});
+  $("moveback").onclick=()=>run("Move card back",async()=>{const r=await api("POST","/card/move-back"); return "back at "+r.card_url+".";});
   $("reset").onclick=()=>run("Start over",async()=>{await api("POST","/reset"); await api("POST","/merchant/reset"); return "Card v1, Travel26 forgot everyone.";});
   $("promo").onclick=()=>run("Travel26 send",async()=>summarize(await api("POST","/merchant/promo",{})));
   $("promo2").onclick=()=>run("Travel26 send",async()=>summarize(await api("POST","/merchant/promo",{subject:"Travel26: Kyoto in autumn, 6 nights with rail pass",body_text:"Hi John, a follow-up from Travel26. Kyoto in autumn, six nights with a rail pass, is $1,990 this month.\n\nSame locator as before. Your card decided where this landed."})));

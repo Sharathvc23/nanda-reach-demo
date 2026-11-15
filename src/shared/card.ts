@@ -16,9 +16,12 @@ export interface CardAgent {
 export interface RoutingRule {
   /** A topic, or "*" for everything else. First matching rule wins. */
   match: string;
+  /** An agent id on the card, or "none": the person declines messages on this topic. */
   deliver_to: string;
   note?: string;
 }
+
+export const DECLINE = "none";
 
 export interface AgentCard {
   kind: "personal";
@@ -44,12 +47,16 @@ export interface AgentCard {
   proof?: { type: "JWS"; alg: "ES256"; kid: string; jws: string; created: string };
 }
 
-/** Pick the agent a message with these topics should go to. */
-export function routeCard(card: Pick<AgentCard, "agents" | "routing">, topics: string[]): { agent: CardAgent; rule: RoutingRule } | null {
+/**
+ * Pick the agent a message with these topics should go to. A rule that delivers to "none" is the
+ * person declining that topic: the match is returned with no agent, and the sender must not send.
+ */
+export function routeCard(card: Pick<AgentCard, "agents" | "routing">, topics: string[]): { agent: CardAgent | null; rule: RoutingRule; declined: boolean } | null {
   for (const rule of card.routing) {
     if (rule.match === "*" || topics.includes(rule.match)) {
+      if (rule.deliver_to === DECLINE) return { agent: null, rule, declined: true };
       const agent = card.agents.find((a) => a.id === rule.deliver_to);
-      if (agent) return { agent, rule };
+      if (agent) return { agent, rule, declined: false };
     }
   }
   return null;

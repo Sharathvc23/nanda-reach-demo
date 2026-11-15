@@ -52,7 +52,7 @@ export class PoppyClient {
       redirect_uris: [`${base}/poppy/callback`],
       token_endpoint_auth_method: "private_key_jwt",
       nanda_locator: this.config.locator,
-      nanda_card: `${base}/.well-known/agent-card.json`,
+      nanda_card: `${base}${this.store.state.card_path ?? "/.well-known/agent-card.json"}`,
     };
   }
 

@@ -27,6 +27,8 @@ export interface KnownAgent {
   client_name: string;
   sub: string;
   nanda_locator: string | null;
+  /** What a naive merchant would have saved instead: the card URL at first contact. Kept only to show the difference. */
+  saved_card_url: string | null;
   first_seen: string;
   last_seen: string;
   sessions: number;
@@ -46,6 +48,10 @@ export interface PromoDelivery {
   error: string | null;
   trace: string[];
   verdict?: string;
+  /** The card declined this topic. */
+  declined?: string | null;
+  /** What happened to a merchant that saved the card URL instead of the locator. */
+  naive?: { url: string; status: number | null; ok: boolean } | null;
 }
 
 interface Travel26State {
@@ -102,6 +108,19 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
     return reply.code(500).send({ error: "server_error" });
   };
 
+  /** A naive merchant saves the card URL it resolved at first contact. Travel26 keeps it only to show what that costs later. */
+  const rememberCardUrl = async (known: KnownAgent): Promise<void> => {
+    try {
+      const r = await resolveLocator(config.indexBaseUrl, known.nanda_locator!, ["travel"]);
+      if (r.card_url) {
+        known.saved_card_url = r.card_url;
+        store.save();
+      }
+    } catch {
+      /* best effort */
+    }
+  };
+
   /** Verify the Session header and record the Session and the agent (spec 5.3 step 4). */
   const verifyAndRecord = async (req: FastifyRequest, context: string): Promise<VerifiedSession> => {
     const session = await getVerifier().verify({ method: req.method, url: req.url, headers: req.headers as Record<string, string | string[] | undefined> });
@@ -113,7 +132,7 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
     const locator = optedIn && typeof session.clientMetadata.nanda_locator === "string" && LOCATOR.test(session.clientMetadata.nanda_locator) ? session.clientMetadata.nanda_locator : null;
     let known = store.state.known_agents.find((k) => k.client_id === session.clientId && k.sub === session.sub);
     if (!known) {
-      known = { client_id: session.clientId, client_name: session.clientMetadata.client_name, sub: session.sub, nanda_locator: locator, first_seen: now, last_seen: now, sessions: 0, requests: 0, context };
+      known = { client_id: session.clientId, client_name: session.clientMetadata.client_name, sub: session.sub, nanda_locator: locator, saved_card_url: null, first_seen: now, last_seen: now, sessions: 0, requests: 0, context };
       store.state.known_agents.push(known);
     }
     known.last_seen = now;
@@ -122,6 +141,7 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
     if (locator) known.nanda_locator = locator;
     if (context) known.context = context;
     store.save();
+    if (known.nanda_locator && !known.saved_card_url) void rememberCardUrl(known);
     return session;
   };
 
@@ -184,6 +204,7 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
         if (known) {
           known.nanda_locator = locator;
           store.save();
+          if (!known.saved_card_url) void rememberCardUrl(known);
         }
         const result = {
           ok: true,
@@ -239,7 +260,7 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
         let value: unknown;
         try {
           const r = await resolveLocator(config.indexBaseUrl, locator, ["travel", "promotion"]);
-          value = { locator, card_version: r.card?.version ?? null, card_url: r.card_url, target: r.target ? { agent: r.target.agent.id, name: r.target.agent.name, harness: r.target.agent.harness, address: r.target.agent.inbox.address, rule: r.target.rule.match } : null, agents: r.card?.agents?.map((a) => ({ id: a.id, name: a.name, address: a.inbox.address })) ?? [], checked_at: new Date().toISOString() };
+          value = { locator, card_version: r.card?.version ?? null, card_url: r.card_url, declined: r.declined?.match ?? null, saved_card_url: store.state.known_agents.find((k) => k.nanda_locator === locator)?.saved_card_url ?? null, target: r.target ? { agent: r.target.agent.id, name: r.target.agent.name, harness: r.target.agent.harness, address: r.target.agent.inbox.address, rule: r.target.rule.match } : null, agents: r.card?.agents?.map((a) => ({ id: a.id, name: a.name, address: a.inbox.address })) ?? [], checked_at: new Date().toISOString() };
         } catch (e) {
           value = { locator, error: (e as Error).message, checked_at: new Date().toISOString() };
         }
@@ -291,6 +312,17 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
         entry.verdict = c.report.verdict;
         entry.trace.push(`Index: GET ${config.indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(known.nanda_locator)}`, ...describeReport(c.report));
         if (c.report.verdict !== "AGREE") throw new Error(`held: corroboration ${c.report.verdict} (${c.report.findings.map((f) => f.kind).join(", ") || "not enough sources"})`);
+        // What a merchant that saved the URL would get right now.
+        if (known.saved_card_url) {
+          const n = await fetch(known.saved_card_url, { headers: { accept: "application/json" }, redirect: "manual", signal: AbortSignal.timeout(8_000) }).then((res) => res.status).catch(() => null);
+          entry.naive = { url: known.saved_card_url, status: n, ok: n === 200 };
+          entry.trace.push(`Saved-URL merchant: GET ${known.saved_card_url} -> ${n ?? "unreachable"}${n === 200 ? "" : " (would have lost John)"}`);
+        }
+        if (c.declined) {
+          entry.declined = c.declined;
+          entry.trace.push(`Route: topics [${topics.join(", ")}] -> rule "${c.declined}" -> declined by the card`);
+          throw new Error(`held: the card declines ${c.declined}`);
+        }
         const r = { target: c.target ? { agent: { id: c.target.agent, name: c.target.name, inbox: { address: c.target.address } }, rule: { match: c.target.rule } } : null };
         if (!r.target) throw new Error("could not resolve the locator to an inbox");
         entry.trace.push(`Route: topics [${topics.join(", ")}] -> rule "${r.target.rule.match}" -> ${r.target.agent.name} <${r.target.agent.inbox.address}>`);

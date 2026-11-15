@@ -20,6 +20,8 @@ export interface CorroboratedResolution {
   card: AgentCard | null;
   card_url: string | null;
   target: { agent: string; name: string; address: string; rule: string } | null;
+  /** The card declines this topic. */
+  declined: string | null;
 }
 
 const timed = async <T>(fn: () => Promise<T>): Promise<{ value: T | null; ms: number; error: string | null }> => {
@@ -39,7 +41,7 @@ const getJson = async (fetchFn: typeof fetch, url: string): Promise<{ status: nu
 export async function corroborateLocator(config: Travel26Config, known: Pick<KnownAgent, "client_id" | "nanda_locator">, topics: string[], fetchFn: typeof fetch = fetch): Promise<CorroboratedResolution> {
   const locator = known.nanda_locator!;
   const views: SourceView[] = [];
-  const out: CorroboratedResolution = { report: null as unknown as CorroborationReport, card: null, card_url: null, target: null };
+  const out: CorroboratedResolution = { report: null as unknown as CorroborationReport, card: null, card_url: null, target: null, declined: null };
 
   // First-hand: what the Poppy session told us. The expectation that the card is signed by that identity is a claim too.
   views.push({ source: "travel26", status: "ok", claims: { locator, client_id: known.client_id, signature: "valid" }, detail: "from the Poppy session" });
@@ -73,7 +75,8 @@ export async function corroborateLocator(config: Travel26Config, known: Pick<Kno
       card = c.value.body as AgentCard;
       out.card = card;
       const routed = Array.isArray(card.agents) && Array.isArray(card.routing) ? routeCard(card, topics) : null;
-      if (routed) out.target = { agent: routed.agent.id, name: routed.agent.name, address: routed.agent.inbox.address, rule: routed.rule.match };
+      if (routed?.declined) out.declined = routed.rule.match;
+      else if (routed?.agent) out.target = { agent: routed.agent.id, name: routed.agent.name, address: routed.agent.inbox.address, rule: routed.rule.match };
       const sig = jwks ? await verifyCardProof(card as unknown as Record<string, unknown>, jwks) : { ok: false as const, reason: "identity keys unavailable" };
       views.push({
         source: "card",
@@ -94,6 +97,6 @@ export async function corroborateLocator(config: Travel26Config, known: Pick<Kno
     else views.push({ source: "inkbox", status: "not_found", claims: {}, detail: `no agent card for ${handle} (HTTP ${ib.value?.status ?? "?"})`, ms: ib.ms });
   }
 
-  out.report = corroborate(locator, views, { required: ["nanda-index", "card", "inkbox"] });
+  out.report = corroborate(locator, views, { required: out.declined ? ["nanda-index", "card"] : ["nanda-index", "card", "inkbox"] });
   return out;
 }

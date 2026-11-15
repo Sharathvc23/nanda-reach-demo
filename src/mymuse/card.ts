@@ -36,7 +36,12 @@ export interface MymuseState {
   companies: Record<string, CompanyState>;
   /** Attack simulation: the host serves a card whose first inbox was swapped after signing. */
   tamper: { inbox_address: string } | null;
+  /** Where the card lives on this host. John can move it; the Index entry follows, merchants that saved the URL do not. */
+  card_path: string;
 }
+
+export const DEFAULT_CARD_PATH = "/.well-known/agent-card.json";
+export const MOVED_CARD_PATH = "/john/v2/agent-card.json";
 
 export function freshState(config: MymuseConfig): MymuseState {
   return {
@@ -48,6 +53,7 @@ export function freshState(config: MymuseConfig): MymuseState {
     keys: { root: null },
     companies: {},
     tamper: null,
+    card_path: DEFAULT_CARD_PATH,
   };
 }
 
@@ -61,7 +67,7 @@ export function wajoAgent(config: MymuseConfig, address = config.wajo.address): 
 
 /** John's agent card: the document his NANDA Index entry points at. */
 export function buildCard(config: MymuseConfig, state: MymuseState): AgentCard {
-  const url = `${config.publicBaseUrl}/.well-known/agent-card.json`;
+  const url = `${config.publicBaseUrl}${state.card_path ?? DEFAULT_CARD_PATH}`;
   const topics = [...new Set(state.routing.map((r) => r.match).filter((m) => m !== "*"))];
   return {
     kind: "personal",

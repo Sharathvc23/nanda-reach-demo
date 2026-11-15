@@ -76,6 +76,13 @@ Two attacks, both live on the page at `/corroboration.html` on John's host:
 merchant safe to use it. The second video, [reach-john-corroboration.webm](docs/demo/reach-john-corroboration.webm),
 shows both attacks refused and both recoveries.
 
+4. **The person says no.** John tells his agent he wants no promotions. The card gets a rule that routes the
+   `promotion` topic nowhere. Travel26 reads it before sending and holds, and says so. Not a failure: the
+   person's choice, enforced by the sender reading the card.
+5. **The card moves.** John moves his card to a new URL and updates his Index entry. A merchant that saved the
+   card URL at first contact now gets 410 Gone. Travel26, holding the locator, follows the Index to the new card
+   and still delivers. Both outcomes appear on the same send.
+
 ## Who does what
 
 | Piece              | Protocol role                                   | Here                                                                                              |

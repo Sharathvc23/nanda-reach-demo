@@ -6,7 +6,7 @@ import type { MymuseConfig } from "./config.js";
 import { JsonStore } from "../shared/store.js";
 import { requireAdmin } from "../shared/auth.js";
 import { InkboxClient } from "../shared/inkbox.js";
-import { buildCard, freshState, wajoAgent, type MymuseState } from "./card.js";
+import { buildCard, freshState, wajoAgent, DEFAULT_CARD_PATH, MOVED_CARD_PATH, type MymuseState } from "./card.js";
 import { AgentTools } from "./tools.js";
 import { makeBrain } from "./brain.js";
 import { PoppyClient } from "./poppy-client.js";
@@ -27,9 +27,15 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
   app.get("/health", async () => ({ ok: true, service: "mymuse", mode: config.mode, brain: config.brain }));
 
   // John's agent card. The NANDA Index entry's registry_url points here.
-  const card = async () => signedCard(config, store, root);
-  app.get("/.well-known/agent-card.json", card);
-  app.get("/cards/john", card);
+  // The card is served only at its current path; the other known path answers 410 Gone, as a moved card would.
+  const cardAt = (path: string) => async (_req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) => {
+    const current = store.state.card_path ?? DEFAULT_CARD_PATH;
+    if (path !== current) return reply.code(410).send({ error: "gone", moved_to: `${config.publicBaseUrl}${current}` });
+    return signedCard(config, store, root);
+  };
+  app.get(DEFAULT_CARD_PATH, cardAt(DEFAULT_CARD_PATH));
+  app.get(MOVED_CARD_PATH, cardAt(MOVED_CARD_PATH));
+  app.get("/cards/john", async () => signedCard(config, store, root));
   registerAttackControls(app, { config, store, root });
 
   // Poppy Personal Agent identity (spec 4.1).
@@ -48,7 +54,7 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
     admin_required: Boolean(config.adminToken),
     owner: config.owner,
     locator: config.locator,
-    card_url: `${config.publicBaseUrl}/.well-known/agent-card.json`,
+    card_url: `${config.publicBaseUrl}${store.state.card_path ?? DEFAULT_CARD_PATH}`,
     poppy_client_id: poppy.clientId,
     card_mcp_url: `${config.publicBaseUrl}/mcp`,
     share_locator: config.shareLocator,
@@ -131,6 +137,7 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
     card: buildCard(config, store.state),
     chat: store.state.chat,
     tamper: store.state.tamper,
+    card_path: store.state.card_path ?? DEFAULT_CARD_PATH,
     companies: Object.fromEntries(Object.entries(store.state.companies).map(([aud, c]) => [aud, { user_id: c.sub, session_id: c.sid, share_locator: c.share_locator }])),
   }));
 

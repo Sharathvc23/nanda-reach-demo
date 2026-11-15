@@ -5,30 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Travel26 Merchant Desk</title>
 <style>
-  :root { --bg:#f5f7fa; --panel:#fff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#0d9488; --accent-ink:#fff; --warn:#c2410c; --ok:#15803d; --chip:#e6f4f2; --muse:#7c3aed; --wajo:#ea580c; --soft:#f9fafb; }
+  :root { --bg:#f5f7fa; --panel:#fff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#0d9488; --accent-ink:#fff; --warn:#c2410c; --ok:#15803d; --chip:#e6f4f2; --muse:#7c3aed; --wajo:#ea580c; --soft:#f9fafb; --hl:#fff3bf; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-  header, .bar, main, footer { max-width:1200px; margin:0 auto; padding:0 16px; }
+  header, .bar, main, footer { max-width:1240px; margin:0 auto; padding:0 16px; }
   header { padding-top:20px; display:flex; align-items:baseline; gap:12px; } h1 { margin:0; font-size:22px; font-weight:650; } header .sub { color:var(--muted); font-size:13px; }
   .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:12px 16px; }
-  button { font:inherit; font-weight:600; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); border-radius:8px; padding:8px 14px; cursor:pointer; }
-  button.secondary { background:var(--panel); color:var(--ink); border-color:var(--line); font-weight:500; } button:disabled { opacity:.5; cursor:progress; }
-  .token { margin-left:auto; display:flex; gap:6px; align-items:center; color:var(--muted); font-size:13px; }
-  .token input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); width:150px; }
-  .status { color:var(--muted); font-size:13px; min-height:22px; padding:0 16px 6px; max-width:1200px; margin:0 auto; } .status.err { color:var(--warn); }
-  main { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; padding-bottom:24px; }
+  button { font:inherit; font-weight:600; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); border-radius:8px; padding:8px 14px; cursor:pointer; } button.secondary { background:var(--panel); color:var(--ink); border-color:var(--line); font-weight:500; } button:disabled { opacity:.5; cursor:progress; }
+  .token { margin-left:auto; display:flex; gap:6px; align-items:center; color:var(--muted); font-size:13px; } .token input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); width:150px; }
+  .status { color:var(--muted); font-size:13px; min-height:22px; padding:0 16px 6px; max-width:1240px; margin:0 auto; } .status.err { color:var(--warn); }
+  main { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.4fr); gap:12px; padding-bottom:24px; } @media (max-width:900px) { main { grid-template-columns:1fr; } }
   section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; min-height:200px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
   h2 { margin:0 0 8px; font-size:15px; font-weight:650; }
   .row { border-top:1px solid var(--line); padding:9px 0; } .row:first-child { border-top:0; }
   .k { color:var(--muted); font-size:12.5px; } code { background:var(--soft); border:1px solid var(--line); padding:1px 5px; border-radius:4px; font-size:12px; word-break:break-all; }
-  .chip { display:inline-block; background:var(--chip); border-radius:999px; padding:2px 9px; font-size:12px; margin-right:4px; }
-  .chip.ok { color:var(--ok); background:#f0fdf4; } .chip.no { color:var(--warn); background:#fff7ed; }
-  .dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; } .dot.muse { background:var(--muse);} .dot.wajo { background:var(--wajo);} .dot.other { background:var(--muted);}
+  .chip { display:inline-block; background:var(--chip); border-radius:999px; padding:2px 9px; font-size:12px; margin-right:4px; } .chip.ok { color:var(--ok); background:#f0fdf4; } .chip.no { color:var(--warn); background:#fff7ed; }
+  .dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; } .dot.muse { background:var(--muse);} .dot.wajo { background:var(--wajo);} .dot.other { background:var(--muted);} .dot.none { background:transparent; border:2px solid var(--warn); }
   .reach { margin-top:6px; font-size:14px; } .reach b { font-weight:650; }
-  .trace { font:12px/1.45 Consolas, "Courier New", monospace; color:var(--muted); white-space:pre-wrap; margin:6px 0 0; }
-  .trace .hit { color:var(--ok); } .trace .err { color:var(--warn); }
+  .sends { display:grid; grid-template-columns:1fr 1fr; gap:8px; } @media (max-width:1100px) { .sends { grid-template-columns:1fr; } }
+  .lbl { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:0 0 4px; }
+  .send { border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--soft); } .send.cur { background:var(--panel); border-color:var(--accent); } .send .s { font-weight:650; font-size:13.5px; } .send .m { color:var(--muted); font-size:12px; margin:2px 0 4px; }
+  .trace { font:11.5px/1.45 Consolas, "Courier New", monospace; color:var(--muted); white-space:pre-wrap; } .trace div { padding:0 3px; border-radius:3px; } .trace .hit { color:var(--ok); } .trace .err { color:var(--warn); } .trace .chg { background:var(--hl); color:var(--ink); }
   .empty { color:var(--muted); font-style:italic; padding:6px 0; }
-  pre { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px; font:12px/1.4 Consolas, "Courier New", monospace; overflow:auto; max-height:360px; margin:8px 0 0; }
+  pre { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px; font:12px/1.4 Consolas, "Courier New", monospace; overflow:auto; max-height:300px; margin:8px 0 0; }
   footer { color:var(--muted); font-size:12.5px; padding-bottom:24px; } a { color:var(--accent); }
 </style>
 </head>
@@ -45,15 +44,13 @@
   <section>
     <h2>Known agents</h2>
     <div id="known"></div>
-  </section>
-  <section>
-    <h2>Last send</h2>
-    <div id="log"></div>
-  </section>
-  <section>
-    <h2>poppy.json</h2>
+    <h2 style="margin-top:16px">poppy.json</h2>
     <div class="k" id="poppyurl"></div>
     <pre id="poppy"></pre>
+  </section>
+  <section>
+    <h2>Sends</h2>
+    <div id="log"></div>
   </section>
 </main>
 <footer id="foot"></footer>
@@ -62,7 +59,6 @@
   const $=(id)=>document.getElementById(id);
   const esc=(s)=>String(s??"").replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const tokenInput=$("token"); try{tokenInput.value=localStorage.getItem("adminToken")||"";}catch{}
-  // A shared link can carry the token: https://host/#token=…  It is stored on first open and removed from the address bar.
   try{const hm=location.hash.match(/[#&]token=([^&]+)/); if(hm){tokenInput.value=decodeURIComponent(hm[1]).trim(); localStorage.setItem("adminToken",tokenInput.value); history.replaceState(null,"",location.pathname+location.search);}}catch{}
   const tokenState=document.createElement("span"); tokenState.style.cssText="font-size:12px;margin-left:6px"; tokenInput.insertAdjacentElement("afterend",tokenState);
   let tokenTimer=null; async function verifyToken(){const v=tokenInput.value.trim(); if(v!==tokenInput.value) tokenInput.value=v; try{localStorage.setItem("adminToken",v);}catch{} if(!v){tokenState.textContent=""; return;} tokenState.textContent="…"; try{const r=await fetch("/admin/check",{headers:{authorization:"Bearer "+v}}); tokenState.textContent=r.ok?"✓ ok":"✗ rejected"; tokenState.style.color=r.ok?"var(--ok)":"var(--warn)";}catch{tokenState.textContent="?";}}
@@ -70,18 +66,16 @@
   const headers=(hasBody)=>{const h={}; if(hasBody) h["content-type"]="application/json"; if(tokenInput.value.trim()) h["authorization"]="Bearer "+tokenInput.value.trim(); return h;};
   const setStatus=(t,err)=>{const el=$("status"); el.textContent=t; el.className="status"+(err?" err":"");};
   async function api(method,url,body){const res=await fetch(url,{method,headers:headers(body!==undefined),body:body===undefined?undefined:JSON.stringify(body)}); const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data.error||(method+" "+url+" -> "+res.status)); return data;}
-  const dotClass=(id)=>id==="muse"||id==="wajo"?id:"other";
-  const trace=(t)=>'<div class="trace">'+(t||[]).map((x)=>'<div class="'+(/^Route:|^InkBox: sent/.test(x)?"hit":/^Error|^Skipped/.test(x)?"err":"")+'">'+esc(x)+"</div>").join("")+"</div>";
+  const dotClass=(id)=>id==="muse"||id==="wajo"?id:id==="none"?"none":"other";
+  function renderTrace(cur, prev){const prevSet=new Set(prev||[]); return '<div class="trace">'+(cur||[]).map((x)=>{const chg=prev&&!prevSet.has(x)&&!/^Index: GET|^  travel26|^  poppy-identity/.test(x); const cls=(/^Route:|^InkBox: sent|^Corroboration: AGREE/.test(x)?"hit ":"")+(/^Error|^  finding|^Corroboration: DIVERGENT|^Saved-URL merchant: .*(4\d\d|5\d\d|unreachable)/.test(x)?"err ":"")+(chg?"chg":""); return '<div class="'+cls.trim()+'">'+esc(x)+"</div>";}).join("")+"</div>";}
+  function sendCard(d, prev, cur){ if(!d) return '<div class="send"><div class="empty">None.</div></div>'; const outcome=d.delivered_to?'<span class="chip ok">delivered</span> <span class="dot '+dotClass(d.delivered_to.agent)+'"></span><strong>'+esc(d.delivered_to.agent)+'</strong> <span class="k">'+esc(d.delivered_to.address)+'</span>':d.declined?'<span class="chip no">held · declined by card</span>':'<span class="chip no">held</span> <span class="k">'+esc(d.error||"")+'</span>'; const naive=d.naive?'<div class="m">saved-URL merchant: '+(d.naive.ok?'<span style="color:var(--ok)">still reaches</span>':'<span style="color:var(--warn)">HTTP '+esc(d.naive.status??"?")+', lost John</span>')+'</div>':''; return '<div class="send'+(cur?" cur":"")+'"><div class="s">'+esc(d.subject)+'</div><div class="m">'+new Date(d.at).toLocaleTimeString()+' · card v'+esc(d.card_version??"?")+(d.verdict?' · '+esc(d.verdict):'')+'</div><div>'+outcome+'</div>'+naive+renderTrace(d.trace, prev?prev.trace:null)+'</div>'; }
   async function refresh(){
     const [known,log,reach]=await Promise.all([api("GET","/known-agents"),api("GET","/promo-log"),api("GET","/reach").catch(()=>[])]);
     const byLoc={}; (reach||[]).forEach((r)=>byLoc[r.locator]=r);
-    $("known").innerHTML=known.length?known.map((k)=>{const r=k.nanda_locator?byLoc[k.nanda_locator]:null;
-      return '<div class="row"><div><strong>'+esc(k.client_name)+'</strong> <span class="chip">user '+esc(k.sub.slice(0,8))+'…</span> '+(k.nanda_locator?'<span class="chip ok">locator held</span>':'<span class="chip no">no locator</span>')+'</div>'
-        +(k.nanda_locator?'<div class="k"><code>'+esc(k.nanda_locator)+'</code></div>':'')
-        +(r&&r.target?'<div class="reach">Travel reaches now: <span class="dot '+dotClass(r.target.agent)+'"></span><b>'+esc(r.target.name)+'</b> <span class="k">'+esc(r.target.address)+' · card v'+esc(r.card_version)+' · rule '+esc(r.target.rule)+'</span></div>'+(r.agents&&r.agents.length>1?'<div class="k">on the card: '+r.agents.map((a)=>'<span class="dot '+dotClass(a.id)+'"></span>'+esc(a.name)).join(", ")+'</div>':''):r&&r.error?'<div class="k" style="color:var(--warn)">resolve failed: '+esc(r.error)+'</div>':'')
-        +'<div class="k">'+k.sessions+' session(s) · '+k.requests+' request(s) · '+esc(k.context||"")+'</div></div>';}).join(""):'<div class="empty">Nobody yet.</div>';
-    const last=log.find((d)=>!(d.trace||[]).some((t)=>/^Skipped/.test(t)))||log[0];
-    $("log").innerHTML=last?'<div class="row"><div><strong>'+esc(last.subject)+'</strong></div><div class="k">'+new Date(last.at).toLocaleTimeString()+' · card v'+esc(last.card_version??"?")+' · '+(last.delivered_to?'<span class="dot '+dotClass(last.delivered_to.agent)+'"></span><strong>'+esc(last.delivered_to.agent)+'</strong> '+esc(last.delivered_to.address):'<span style="color:var(--warn)">not delivered</span>')+'</div>'+trace(last.trace)+'</div>':'<div class="empty">None.</div>';
+    $("known").innerHTML=known.length?known.map((k)=>{const r=k.nanda_locator?byLoc[k.nanda_locator]:null; const reach=r?(r.declined?'<div class="reach">Travel reaches now: <span class="dot none"></span><b>nobody</b> <span class="k">· the card declines '+esc(r.declined)+'</span></div>':r.target?'<div class="reach">Travel reaches now: <span class="dot '+dotClass(r.target.agent)+'"></span><b>'+esc(r.target.name)+'</b> <span class="k">'+esc(r.target.address)+' · card v'+esc(r.card_version)+' · rule '+esc(r.target.rule)+'</span></div>':r.error?'<div class="k" style="color:var(--warn)">resolve failed: '+esc(r.error)+'</div>':''):'';
+      return '<div class="row"><div><strong>'+esc(k.client_name)+'</strong> <span class="chip">user '+esc(k.sub.slice(0,8))+'…</span> '+(k.nanda_locator?'<span class="chip ok">locator held</span>':'<span class="chip no">no locator</span>')+'</div>'+(k.nanda_locator?'<div class="k"><code>'+esc(k.nanda_locator)+'</code></div>':'')+reach+(k.saved_card_url?'<div class="k">a saved-URL merchant would hold: <code>'+esc(k.saved_card_url)+'</code></div>':'')+'<div class="k">'+k.sessions+' session(s) · '+k.requests+' request(s) · '+esc(k.context||"")+'</div></div>';}).join(""):'<div class="empty">Nobody yet.</div>';
+    const l=log.filter((d)=>!(d.trace||[]).some((t)=>/^Skipped/.test(t)));
+    $("log").innerHTML=l.length?'<div class="sends">'+(l[1]?'<div><div class="lbl">Previous</div>'+sendCard(l[1],null,false)+'</div>':'<div></div>')+'<div><div class="lbl">Latest</div>'+sendCard(l[0],l[1],true)+'</div></div>':'<div class="empty">None.</div>';
   }
   async function run(label,fn){const bs=document.querySelectorAll("button"); bs.forEach((b)=>b.disabled=true); setStatus(label+"…"); try{const out=await fn(); setStatus(label+" done."+(out?" "+out:"")); await refresh();}catch(e){setStatus(label+" failed: "+e.message,true);}finally{bs.forEach((b)=>b.disabled=false);}}
   const summarize=(r)=>{const d=(r.results||[]).find((x)=>x.delivered_to||x.error)||r.results?.[0]; if(!d) return "nobody to send to"; return d.delivered_to?"Delivered to "+d.delivered_to.agent+" ("+d.delivered_to.address+") using card v"+d.card_version+".":d.error;};

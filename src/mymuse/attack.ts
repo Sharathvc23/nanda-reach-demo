@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { MymuseConfig } from "./config.js";
 import type { JsonStore } from "../shared/store.js";
-import { buildCard, type MymuseState } from "./card.js";
+import { buildCard, DEFAULT_CARD_PATH, MOVED_CARD_PATH, type MymuseState } from "./card.js";
 import { signCard } from "../shared/cardproof.js";
 import { generateEs256Key, type EcKey } from "../shared/poppy.js";
 import { requireAdmin } from "../shared/auth.js";
@@ -80,11 +80,26 @@ export function registerAttackControls(app: FastifyInstance, deps: { config: Mym
     if (!res.ok) throw new Error(`Index update failed: ${res.status} ${JSON.stringify(body).slice(0, 200)}`);
     return { registry_url: body.registry_url ?? cardUrl, status: (body.extensions as any)?.["org.projectnanda"]?.status ?? body.status ?? null };
   };
+  // John moves his card to a new URL and updates his Index entry. A merchant that saved the old URL gets 410.
+  const moveTo = async (path: string, reply: import("fastify").FastifyReply) => {
+    store.state.card_path = path;
+    store.save();
+    try {
+      const r = await pointIndex(`${config.publicBaseUrl}${path}`);
+      return { card_url: `${config.publicBaseUrl}${path}`, index: r };
+    } catch (e) {
+      return reply.code(502).send({ card_url: `${config.publicBaseUrl}${path}`, error: (e as Error).message });
+    }
+  };
+  app.post("/card/move", { preHandler: admin }, async (_req, reply) => moveTo(MOVED_CARD_PATH, reply));
+  app.post("/card/move-back", { preHandler: admin }, async (_req, reply) => moveTo(DEFAULT_CARD_PATH, reply));
+
   app.get("/index/status", async () => {
     const res = await fetch(`${config.indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(config.locator)}`, { signal: AbortSignal.timeout(15_000) });
     const body = (await res.json().catch(() => ({}))) as { entry?: { registry_url?: string; url?: string; extensions?: Record<string, { status?: string }> } };
     const url = body.entry?.registry_url ?? body.entry?.url ?? null;
-    return { locator: config.locator, registry_url: url, status: body.entry?.extensions?.["org.projectnanda"]?.status ?? null, hijacked: Boolean(url && url !== `${config.publicBaseUrl}/.well-known/agent-card.json`), own_card_url: `${config.publicBaseUrl}/.well-known/agent-card.json`, controllable: Boolean(config.indexAccount.email && config.indexAccount.password) };
+    const own = `${config.publicBaseUrl}${store.state.card_path ?? DEFAULT_CARD_PATH}`;
+    return { locator: config.locator, registry_url: url, status: body.entry?.extensions?.["org.projectnanda"]?.status ?? null, hijacked: Boolean(url && url !== own), own_card_url: own, card_path: store.state.card_path ?? DEFAULT_CARD_PATH, moved: (store.state.card_path ?? DEFAULT_CARD_PATH) !== DEFAULT_CARD_PATH, controllable: Boolean(config.indexAccount.email && config.indexAccount.password) };
   });
   app.post<{ Body: { card_url?: string } }>("/index/point", { preHandler: admin }, async (req, reply) => {
     try {
@@ -95,7 +110,7 @@ export function registerAttackControls(app: FastifyInstance, deps: { config: Mym
   });
   app.post("/index/restore", { preHandler: admin }, async (_req, reply) => {
     try {
-      return await pointIndex(`${config.publicBaseUrl}/.well-known/agent-card.json`);
+      return await pointIndex(`${config.publicBaseUrl}${store.state.card_path ?? DEFAULT_CARD_PATH}`);
     } catch (e) {
       return reply.code(502).send({ error: (e as Error).message });
     }

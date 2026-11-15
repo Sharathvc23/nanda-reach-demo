@@ -13,6 +13,8 @@ export interface Resolution {
   card_url: string | null;
   card: AgentCard | null;
   target: { agent: CardAgent; rule: RoutingRule } | null;
+  /** The card declines this topic: no delivery, and that is the person's choice, not a failure. */
+  declined: RoutingRule | null;
   trace: string[];
 }
 
@@ -24,7 +26,7 @@ interface IndexResolveResponse {
 export async function resolveLocator(indexBaseUrl: string, locator: string, topics: string[], fetchFn: typeof fetch = fetch): Promise<Resolution> {
   const trace: string[] = [];
   const indexUrl = `${indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(locator)}`;
-  const out: Resolution = { locator, index_url: indexUrl, card_url: null, card: null, target: null, trace };
+  const out: Resolution = { locator, index_url: indexUrl, card_url: null, card: null, target: null, declined: null, trace };
 
   trace.push(`Index: GET ${indexUrl}`);
   const res = await fetchFn(indexUrl, { headers: { accept: "application/json", "user-agent": "travel26/0.1" }, signal: AbortSignal.timeout(10_000) });
@@ -52,12 +54,17 @@ export async function resolveLocator(indexBaseUrl: string, locator: string, topi
     return out;
   }
   trace.push(`Card: version ${card.version}, ${card.agents.length} agent(s), ${card.routing.length} rule(s)`);
-  const target = routeCard(card, topics);
-  if (!target) {
+  const routed = routeCard(card, topics);
+  if (!routed) {
     trace.push(`No rule matched topics [${topics.join(", ")}]`);
     return out;
   }
-  out.target = target;
-  trace.push(`Route: topics [${topics.join(", ")}] -> rule "${target.rule.match}" -> ${target.agent.name} <${target.agent.inbox.address}>`);
+  if (routed.declined || !routed.agent) {
+    out.declined = routed.rule;
+    trace.push(`Route: topics [${topics.join(", ")}] -> rule "${routed.rule.match}" -> declined by the card`);
+    return out;
+  }
+  out.target = { agent: routed.agent, rule: routed.rule };
+  trace.push(`Route: topics [${topics.join(", ")}] -> rule "${routed.rule.match}" -> ${routed.agent.name} <${routed.agent.inbox.address}>`);
   return out;
 }

@@ -1,6 +1,6 @@
 import type { JsonStore } from "../shared/store.js";
 import type { InkboxClient } from "../shared/inkbox.js";
-import type { CardAgent, RoutingRule } from "../shared/card.js";
+import { DECLINE, type CardAgent, type RoutingRule } from "../shared/card.js";
 import type { MymuseConfig } from "./config.js";
 import { buildCard, type MymuseState, type ToolStep } from "./card.js";
 import type { PoppyClient } from "./poppy-client.js";
@@ -11,6 +11,8 @@ import type { PoppyClient } from "./poppy-client.js";
  */
 export class AgentTools {
   readonly steps: ToolStep[] = [];
+  /** One request to the agent is one card version, however many edits it takes. */
+  private bumped = false;
 
   constructor(
     private readonly config: MymuseConfig,
@@ -87,7 +89,10 @@ export class AgentTools {
   }
 
   private bump(): void {
-    this.store.state.version += 1;
+    if (!this.bumped) {
+      this.store.state.version += 1;
+      this.bumped = true;
+    }
     this.store.state.updated_at = new Date().toISOString();
     this.store.save();
   }
@@ -110,9 +115,20 @@ export class AgentTools {
     return this.record("remove_agent", { id }, { ok: true, card_version: this.store.state.version });
   }
 
+  /** John declines a topic: a rule that delivers it nowhere, placed first. */
+  declineTopic(topic: string): string {
+    const rest = this.store.state.routing.filter((r) => r.match !== topic.toLowerCase());
+    return this.setRouting([{ match: topic.toLowerCase(), deliver_to: DECLINE, note: `${this.config.owner}: no ${topic} messages, please` }, ...rest]);
+  }
+
+  allowTopic(topic: string): string {
+    const rest = this.store.state.routing.filter((r) => !(r.match === topic.toLowerCase() && r.deliver_to === DECLINE));
+    return this.setRouting(rest.length ? rest : [{ match: "*", deliver_to: "muse" }]);
+  }
+
   setRouting(rules: RoutingRule[]): string {
     if (!rules.length) throw new Error("at least one rule is required");
-    for (const r of rules) if (!this.store.state.agents.some((a) => a.id === r.deliver_to)) throw new Error(`no agent with id "${r.deliver_to}"; add it first`);
+    for (const r of rules) if (r.deliver_to !== DECLINE && !this.store.state.agents.some((a) => a.id === r.deliver_to)) throw new Error(`no agent with id "${r.deliver_to}"; add it first`);
     if (!rules.some((r) => r.match === "*")) rules = [...rules, { match: "*", deliver_to: "muse" }];
     this.store.state.routing = rules.map((r) => ({ match: r.match.toLowerCase(), deliver_to: r.deliver_to, ...(r.note ? { note: r.note } : {}) }));
     this.bump();
