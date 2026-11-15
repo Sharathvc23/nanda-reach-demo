@@ -19,6 +19,8 @@ NANDA locator; Travel26's first promotion lands in Muse; John reroutes travel to
 promotion, to the same locator, lands in Wajo. Live: [John's side](https://mymuse-production.up.railway.app) and
 [Travel26's desk](https://travel26-production.up.railway.app).
 
+A second cut, [single page, 81 seconds](docs/demo/reach-john-demo-single-page.webm), shows the same run on John's page alone.
+
 ## The story, in three acts
 
 John's personal agent, **mymuse**, speaks Poppy. **Travel26** is a Poppy company.
