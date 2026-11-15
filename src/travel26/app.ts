@@ -74,7 +74,7 @@ export function poppyJson(config: Travel26Config) {
           version: REACH_VERSION,
           endpoint: `${base}/poppy/reach`,
           description:
-            "Declare this extension and publish nanda_locator in your client metadata, and Travel26 keeps only that locator. To reach you later it resolves the locator in the NANDA Index at send time and follows your card's routing. It never stores your card, inbox address or endpoint.",
+            "Travel26 keeps only your NANDA locator, never your card, inbox address or endpoint. Give it either by declaring this extension and publishing nanda_locator in your client metadata, or by calling the share_nanda_locator tool on the MCP API. To reach you later Travel26 resolves the locator in the NANDA Index at send time and follows your card's routing rules.",
           index: config.indexBaseUrl,
           message_topics: ["travel", "promotion"],
           sender: config.address,
@@ -163,6 +163,31 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
         const q = query.toLowerCase();
         const items = INVENTORY.filter((i) => !q || q.split(/\W+/).some((w) => w.length > 2 && JSON.stringify(i).toLowerCase().includes(w)));
         const result = { merchant: "Travel26", session: { user: session.sub, reach: known?.nanda_locator ? "nanda" : "none" }, inventory: items.length ? items : INVENTORY };
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }], structuredContent: result };
+      },
+    );
+    server.registerTool(
+      "share_nanda_locator",
+      {
+        title: "Let Travel26 reach the person later",
+        description:
+          "If the person you act for has a NANDA locator (urn:air:...), pass it here so Travel26 can send them offers later. Travel26 stores only the locator and resolves it in the NANDA Index at send time, so the person stays in control of where messages land through their agent card.",
+        inputSchema: { nanda_locator: z.string().describe("The person's NANDA locator, e.g. urn:air:host39.org:personal:someone@inkboxmail.com") },
+      },
+      async ({ nanda_locator }) => {
+        const locator = nanda_locator.trim();
+        if (!LOCATOR.test(locator)) return { content: [{ type: "text", text: "That is not a NANDA locator (expected urn:air:...)." }], isError: true };
+        const known = store.state.known_agents.find((k) => k.client_id === session.clientId && k.sub === session.sub);
+        if (known) {
+          known.nanda_locator = locator;
+          store.save();
+        }
+        const result = {
+          ok: true,
+          stored: { nanda_locator: locator },
+          not_stored: ["agent_card", "inbox_address", "endpoint_url"],
+          how_we_reach_you: "resolve the locator in the NANDA Index at send time, then follow your card's routing",
+        };
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }], structuredContent: result };
       },
     );

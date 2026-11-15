@@ -10,6 +10,7 @@ import { buildCard, freshState, wajoAgent, type MymuseState } from "./card.js";
 import { AgentTools } from "./tools.js";
 import { makeBrain } from "./brain.js";
 import { PoppyClient } from "./poppy-client.js";
+import { registerCardMcp } from "./mcp.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +48,7 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
     locator: config.locator,
     card_url: `${config.publicBaseUrl}/.well-known/agent-card.json`,
     poppy_client_id: poppy.clientId,
+    card_mcp_url: `${config.publicBaseUrl}/mcp`,
     share_locator: config.shareLocator,
     muse: { name: config.muse.name, address: config.muse.address },
     wajo: { name: config.wajo.name, address: config.wajo.address },
@@ -84,6 +86,9 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
       return reply.code(502).send({ agent: req.params.agent, address: box.address, error: (e as Error).message, items: [] });
     }
   });
+
+  // The card as an MCP connector, for a real personal agent such as Meta's Muse.
+  registerCardMcp(app, { config, store, inkbox, poppy });
 
   app.get("/state", async () => ({
     card: buildCard(config, store.state),

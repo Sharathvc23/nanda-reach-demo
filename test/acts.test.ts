@@ -17,6 +17,7 @@ import { buildMymuse } from "../src/mymuse/app.js";
 let mockApp: FastifyInstance;
 let t26App: FastifyInstance;
 let mmApp: FastifyInstance;
+let mmPoppy: import("../src/mymuse/poppy-client.js").PoppyClient;
 let t26: Travel26Config;
 let mm: MymuseConfig;
 let dataDir: string;
@@ -46,7 +47,7 @@ beforeAll(async () => {
   t26.publicBaseUrl = `http://127.0.0.1:${portOf(t26App)}`;
 
   mm = loadMymuseConfig({ MODE: "mock", MOCK_BASE_URL: mockBase, DATA_DIR: join(dataDir, "mm"), ADMIN_TOKEN: "test-admin", AGENT_BRAIN: "scripted", TRAVEL26_URL: t26.publicBaseUrl });
-  ({ app: mmApp } = await buildMymuse(mm));
+  ({ app: mmApp, poppy: mmPoppy } = await buildMymuse(mm));
   await mmApp.listen({ port: 0, host: "127.0.0.1" });
   mm.publicBaseUrl = `http://127.0.0.1:${portOf(mmApp)}`;
 
@@ -169,6 +170,28 @@ describe("the three acts", () => {
   it("a non-travel message still goes to Muse under the new card", async () => {
     const r = await call(t26.publicBaseUrl, "POST", "/promo", { subject: "Receipt", topics: ["billing"] });
     expect(r.body.results[0].delivered_to.agent).toBe("muse");
+  });
+
+  it("a personal agent without the extension can hand over the locator through the MCP tool", async () => {
+    const doc = await mmPoppy.discover(t26.publicBaseUrl);
+    const r = await mmPoppy.callMcpTool(doc, `${t26.publicBaseUrl}/mcp`, "share_nanda_locator", { nanda_locator: mm.locator });
+    expect((r.structured as any).stored.nanda_locator).toBe(mm.locator);
+    const bad = await mmPoppy.callMcpTool(doc, `${t26.publicBaseUrl}/mcp`, "share_nanda_locator", { nanda_locator: "not-a-locator" }).catch((e: Error) => e.message);
+    expect(String(bad)).toMatch(/not a NANDA locator/);
+  });
+
+  it("the card host is an MCP connector a real Muse can drive", async () => {
+    const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+    const { StreamableHTTPClientTransport } = await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+    const unauth = await fetch(`${mm.publicBaseUrl}/mcp`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+    expect(unauth.status).toBe(401);
+    const client = new Client({ name: "muse-test", version: "0" });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${mm.publicBaseUrl}/mcp`), { requestInit: { headers: { authorization: "Bearer test-admin" } } }));
+    const tools = await client.listTools();
+    expect(tools.tools.map((t) => t.name).sort()).toEqual(["add_agent", "check_inbox", "get_card", "remove_agent", "set_routing"]);
+    const card = await client.callTool({ name: "get_card", arguments: {} });
+    expect(JSON.stringify(card.content)).toContain("routing");
+    await client.close();
   });
 
   it("admin endpoints need the token", async () => {
