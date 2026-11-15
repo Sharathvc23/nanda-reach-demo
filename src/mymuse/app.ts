@@ -80,6 +80,8 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
   app.get<{ Params: { agent: string } }>("/inbox/:agent", async (req, reply) => {
     const box = req.params.agent === "muse" ? config.muse : req.params.agent === "wajo" ? config.wajo : null;
     if (!box) return reply.code(404).send({ error: "agent must be muse or wajo" });
+    // A mailbox whose key this host does not hold belongs to a real agent (Meta's Muse); it reads its own inbox.
+    if (!box.apiKey) return { agent: req.params.agent, address: box.address, items: [], error: `This mailbox belongs to the real ${box.harness} agent. Read it in ${box.harness}.` };
     try {
       return { agent: req.params.agent, address: box.address, items: await inkbox.listInbound(box, 20) };
     } catch (e) {

@@ -23,12 +23,14 @@ export function loadMymuseConfig(overrides: Overrides = {}): MymuseConfig {
   const museAddress = env("MYMUSE_ADDRESS", "john-muse@inkboxmail.test", overrides);
   const brainSetting = env("AGENT_BRAIN", "", overrides);
   const brain: Brain = brainSetting === "scripted" || brainSetting === "claude" ? brainSetting : process.env.ANTHROPIC_API_KEY ? "claude" : "scripted";
+  const shared = loadShared(8096, overrides);
+  const mode = shared.mode;
   return {
-    ...loadShared(8096, overrides),
+    ...shared,
     owner: env("OWNER_NAME", "John", overrides),
     locator: env("JOHN_LOCATOR", `urn:air:host39.org:personal:${museAddress}`, overrides),
-    muse: { name: "John on Muse", harness: "Muse", address: museAddress, apiKey: env("MYMUSE_API_KEY", "mock-key-muse", overrides) },
-    wajo: { name: "John on Wajo", harness: "Wajo", address: env("WAJO_ADDRESS", "john-wajo@inkboxmail.test", overrides), apiKey: env("WAJO_API_KEY", "mock-key-wajo", overrides) },
+    muse: { name: "John on Muse", harness: "Muse", address: museAddress, apiKey: env("MYMUSE_API_KEY", mode === "mock" ? "mock-key-muse" : "", overrides) },
+    wajo: { name: "John on Wajo", harness: "Wajo", address: env("WAJO_ADDRESS", "john-wajo@inkboxmail.test", overrides), apiKey: env("WAJO_API_KEY", mode === "mock" ? "mock-key-wajo" : "", overrides) },
     travel26Url: stripSlash(env("TRAVEL26_URL", "http://localhost:8095", overrides)),
     brain,
     model: env("AGENT_MODEL", "claude-opus-5-5", overrides),
