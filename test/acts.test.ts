@@ -134,7 +134,8 @@ describe("the three acts", () => {
     const wajo = await call(mm.publicBaseUrl, "GET", "/inbox/wajo");
     expect(muse.body.items).toHaveLength(1);
     expect(muse.body.items[0].from_address).toBe(t26.address);
-    expect(wajo.body.items).toHaveLength(0);
+    // Wajo is not on the card yet, so it has no inbox here.
+    expect(wajo.status).toBe(404);
   });
 
   it("mymuse can read the promotion from its own inbox", async () => {
