@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Reach John · stage</title>
+<style>
+  :root { --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --merchant:#0d9488; }
+  html, body { margin:0; height:100%; background:#eef1f5; font:15px/1.4 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:var(--ink); }
+  .cap { height:74px; display:flex; align-items:center; gap:16px; padding:0 22px; background:#ffffff; border-bottom:1px solid var(--line); }
+  .cap .step { flex:none; min-width:92px; text-align:center; font-weight:700; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:#fff; background:var(--accent); border-radius:999px; padding:6px 12px; }
+  .cap .step.merchant { background:var(--merchant); }
+  .cap .text { font-size:19px; font-weight:600; line-height:1.3; }
+  .cap .text small { display:block; font-weight:400; font-size:14px; color:var(--muted); margin-top:1px; }
+  .frames { display:grid; grid-template-columns:3fr 2fr; gap:10px; padding:10px; height:calc(100% - 74px); box-sizing:border-box; }
+  .pane { display:flex; flex-direction:column; border:2px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; transition:border-color .3s, box-shadow .3s; }
+  .pane.hot { border-color:var(--accent); box-shadow:0 0 0 4px rgba(37,99,235,.15); }
+  .pane.hot.merchant { border-color:var(--merchant); box-shadow:0 0 0 4px rgba(13,148,136,.15); }
+  .bar { height:30px; display:flex; align-items:center; gap:8px; padding:0 12px; font-size:12.5px; color:var(--muted); background:#f9fafb; border-bottom:1px solid var(--line); }
+  .bar b { color:var(--ink); }
+  .bar .url { margin-left:auto; font-family:Consolas, "Courier New", monospace; font-size:12px; }
+  iframe { flex:1; border:0; width:100%; }
+</style>
+</head>
+<body>
+<div class="cap"><div class="step" id="step">Start</div><div class="text" id="text">John and a merchant that has never heard of him<small>Two real services, the live NANDA Index, and real InkBox mailboxes.</small></div></div>
+<div class="frames">
+  <div class="pane" id="left"><div class="bar"><b>John's side</b> · his agent, his card, his inboxes<span class="url" id="lurl"></span></div><iframe id="lf" src="about:blank"></iframe></div>
+  <div class="pane merchant" id="right"><div class="bar"><b>Travel26's side</b> · what the merchant sees<span class="url" id="rurl"></span></div><iframe id="rf" src="about:blank"></iframe></div>
+</div>
+<script>
+  window.stage = {
+    load(left, right) { document.getElementById("lf").src = left; document.getElementById("rf").src = right; document.getElementById("lurl").textContent = left.replace(/^https?:\/\//, ""); document.getElementById("rurl").textContent = right.replace(/^https?:\/\//, ""); },
+    caption(step, text, sub, side) {
+      const s = document.getElementById("step"); s.textContent = step; s.className = "step" + (side === "merchant" ? " merchant" : "");
+      document.getElementById("text").innerHTML = text + (sub ? "<small>" + sub + "</small>" : "");
+      document.getElementById("left").classList.toggle("hot", side === "john");
+      document.getElementById("right").classList.toggle("hot", side === "merchant");
+    },
+  };
+</script>
+</body>
+</html>

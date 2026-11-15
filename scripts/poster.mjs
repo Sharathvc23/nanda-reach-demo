@@ -1,0 +1,15 @@
+import { chromium } from "playwright";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+const [john, merchant, out] = [process.argv[2], process.argv[3], process.argv[4] ?? "docs/demo/poster.png"];
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+await page.goto(pathToFileURL(resolve("scripts/stage.html")).href);
+await page.evaluate(([l, r]) => window.stage.load(l, r), [john, merchant]);
+await page.evaluate(() => window.stage.caption("Done", "Delivered to Wajo. Muse got nothing.", "One locator, held by the merchant. John's card decided where each message landed.", "john"));
+await page.frameLocator("#lf").locator("#p-locator").filter({ hasText: /urn:air/ }).waitFor({ timeout: 60_000 });
+await page.frameLocator("#rf").locator("#known").filter({ hasText: /.+/ }).waitFor({ timeout: 60_000 });
+await new Promise((r) => setTimeout(r, 3000));
+await page.screenshot({ path: out });
+await browser.close();
+console.log("poster", out);

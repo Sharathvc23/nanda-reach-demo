@@ -10,6 +10,15 @@ a way for the company to contact the personal agent later: push notifications ar
 [on its roadmap](https://personalagentprotocol.org/docs/roadmap#push-notifications), not in the
 spec. This demo fills that gap with the NANDA Index.
 
+## Demo
+
+[![The demo: John's side left, Travel26's site right](docs/demo/poster.png)](docs/demo/reach-john-demo.webm)
+
+**[Watch the 37-second run](docs/demo/reach-john-demo.webm)** (WebM). John's agent shops at Travel26 over Poppy and shares only his
+NANDA locator; Travel26's first promotion lands in Muse; John reroutes travel to Wajo by editing his card; Travel26's next
+promotion, to the same locator, lands in Wajo. Live: [John's side](https://mymuse-production.up.railway.app) and
+[Travel26's desk](https://travel26-production.up.railway.app).
+
 ## The story, in three acts
 
 John's personal agent, **mymuse**, speaks Poppy. **Travel26** is a Poppy company.
