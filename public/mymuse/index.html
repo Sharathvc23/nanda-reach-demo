@@ -94,36 +94,34 @@
 <div class="wrap">
 <header>
   <h1>Reach John</h1>
-  <p>A Poppy merchant discovers John's agent, keeps only his NANDA locator, and still reaches the right agent after John changes his card.</p>
   <label class="token" style="margin-left:auto">admin token <input id="token" type="password" placeholder="for the buttons" autocomplete="off" /></label>
 </header>
 <div id="status" class="status"></div>
 
 <div class="pipe">
-  <div class="step"><div class="n">1 · what the merchant holds</div><div class="t">John's locator <span class="pill fixed">never changes</span></div><div class="v" id="p-locator">…</div></div>
-  <div class="step"><div class="n">2 · at send time</div><div class="t">NANDA Index resolves it</div><div class="v" id="p-index">…</div></div>
-  <div class="step"><div class="n">3 · John controls</div><div class="t">His agent card <span class="pill" id="p-version">v?</span></div><div class="v" id="p-card">…</div></div>
-  <div class="step"><div class="n">4 · the rule picks</div><div class="t">The inbox</div><div class="v" id="p-target">…</div></div>
+  <div class="step"><div class="n">Locator</div><div class="t">What the merchant holds <span class="pill fixed">fixed</span></div><div class="v" id="p-locator">…</div></div>
+  <div class="step"><div class="n">Index</div><div class="t">Resolves locator → card</div><div class="v" id="p-index">…</div></div>
+  <div class="step"><div class="n">Card</div><div class="t">John's agent card <span class="pill" id="p-version">v?</span></div><div class="v" id="p-card">…</div></div>
+  <div class="step"><div class="n">Inbox</div><div class="t">Where travel goes now</div><div class="v" id="p-target">…</div></div>
 </div>
 
 <main>
   <section>
-    <div class="hd"><h2><span class="sq merchant"></span>Travel26 <span class="sub">the merchant</span></h2><a class="sub" id="t26link" href="#" target="_blank" rel="noopener">open desk</a></div>
+    <div class="hd"><h2><span class="sq merchant"></span>Travel26</h2><a class="sub" id="t26link" href="#" target="_blank" rel="noopener">open desk</a></div>
     <div class="bd">
-      <div class="lbl">Personal agents it has met</div>
+      <div class="lbl">Known agents</div>
       <div id="known"></div>
       <div class="btns"><button class="merchant" id="promo">Send promotion</button><button class="secondary" id="promo2">Send another (Kyoto)</button></div>
       <div class="lbl">Last send</div>
       <div id="log"></div>
-      <div class="note" style="margin-top:10px">Stores: client id, pseudonymous user id, locator. Never the card, an address or an endpoint.</div>
     </div>
   </section>
 
   <section>
-    <div class="hd"><h2><span class="sq agent"></span>John talks to his agent <span class="sub" id="brain"></span></h2></div>
+    <div class="hd"><h2><span class="sq agent"></span>John's agent <span class="sub" id="brain"></span></h2></div>
     <div class="bd">
       <div class="chat" id="chat"></div>
-      <form id="form"><input type="text" id="input" placeholder="Tell mymuse what to do…" autocomplete="off" /><button type="submit" id="send">Send</button></form>
+      <form id="form"><input type="text" id="input" placeholder="Message" autocomplete="off" /><button type="submit" id="send">Send</button></form>
       <div class="btns">
         <button class="secondary" data-say="Find me flights to Lisbon in December on Travel26">1 · Shop at Travel26</button>
         <button class="secondary" data-say="Check my inbox">Check inbox</button>
@@ -135,11 +133,11 @@
   </section>
 
   <section>
-    <div class="hd"><h2>John's agents <span class="sub" id="cardv"></span></h2></div>
+    <div class="hd"><h2>Card <span class="sub" id="cardv"></span></h2></div>
     <div class="bd">
       <div class="rules" id="rules"></div>
       <div id="agents"></div>
-      <details class="raw"><summary>Card URL, Poppy identity and raw JSON</summary><div class="note" id="cardmeta" style="margin:6px 0"></div><pre class="rawcard" id="cardraw"></pre></details>
+      <details class="raw"><summary>Raw</summary><div class="note" id="cardmeta" style="margin:6px 0"></div><pre class="rawcard" id="cardraw"></pre></details>
     </div>
   </section>
 </main>
@@ -161,27 +159,28 @@
   function renderMerchant(m){
     $("t26link").href=m.url;
     const known=m.known_agents||[];
-    $("known").innerHTML=m.error?'<div class="empty">Merchant unreachable: '+esc(m.error)+'</div>':known.length?known.map((k)=>'<div class="row"><div><strong>'+esc(k.client_name)+'</strong> <span class="chip">user '+esc(k.sub.slice(0,8))+'…</span> '+(k.nanda_locator?'<span class="chip ok">reachable via NANDA</span>':'<span class="chip no">no way to reach</span>')+'</div><div class="k">'+k.sessions+' session(s) · '+k.requests+' request(s) · asked: '+esc(k.context||"")+'</div></div>').join(""):'<div class="empty">Nobody yet. Ask John\'s agent to shop.</div>';
+    const byLoc={}; (m.reach||[]).forEach((r)=>byLoc[r.locator]=r);
+    $("known").innerHTML=m.error?'<div class="empty">Merchant unreachable: '+esc(m.error)+'</div>':known.length?known.map((k)=>{const r=k.nanda_locator?byLoc[k.nanda_locator]:null; return '<div class="row"><div><strong>'+esc(k.client_name)+'</strong> <span class="chip">user '+esc(k.sub.slice(0,8))+'…</span> '+(k.nanda_locator?'<span class="chip ok">locator held</span>':'<span class="chip no">no locator</span>')+'</div>'+(r&&r.target?'<div style="margin-top:4px">Travel reaches now: <span class="dot '+dotClass(r.target.agent)+'"></span><b>'+esc(r.target.name)+'</b> <span class="k">'+esc(r.target.address)+' · card v'+esc(r.card_version)+'</span></div>':'')+'<div class="k">'+k.sessions+' session(s) · '+k.requests+' request(s) · '+esc(k.context||"")+'</div></div>';}).join(""):'<div class="empty">Nobody yet.</div>';
     const log=m.promo_log||[]; const last=log.find((d)=>!(d.trace||[]).some((t)=>/^Skipped/.test(t)))||log[0];
-    $("log").innerHTML=last?'<div class="row"><div><strong>'+esc(last.subject)+'</strong></div><div class="k">'+new Date(last.at).toLocaleTimeString()+' · card v'+esc(last.card_version??"?")+' · '+(last.delivered_to?'delivered to <strong>'+esc(last.delivered_to.agent)+'</strong> '+esc(last.delivered_to.address):'<span style="color:var(--warn)">not delivered</span>')+'</div>'+trace(last.trace)+'</div>':'<div class="empty">No promotion sent yet.</div>';
+    $("log").innerHTML=last?'<div class="row"><div><strong>'+esc(last.subject)+'</strong></div><div class="k">'+new Date(last.at).toLocaleTimeString()+' · card v'+esc(last.card_version??"?")+' · '+(last.delivered_to?'delivered to <strong>'+esc(last.delivered_to.agent)+'</strong> '+esc(last.delivered_to.address):'<span style="color:var(--warn)">not delivered</span>')+'</div>'+trace(last.trace)+'</div>':'<div class="empty">None.</div>';
   }
   function renderChat(turns){
-    $("chat").innerHTML=turns.length?turns.map((t)=>'<div class="turn '+t.role+'">'+esc(t.text)+(t.steps&&t.steps.length?'<div class="steps">'+t.steps.map((s)=>'<details><summary class="'+(s.ok?"":"bad")+'">'+esc(s.tool)+'</summary><pre>'+esc(JSON.stringify(s.input))+"\n\n"+esc(s.output)+'</pre></details>').join("")+"</div>":"")+"</div>").join(""):'<div class="empty">Nothing yet. Press "1 · Shop at Travel26" or type a request.</div>';
+    $("chat").innerHTML=turns.length?turns.map((t)=>'<div class="turn '+t.role+'">'+esc(t.text)+(t.steps&&t.steps.length?'<div class="steps">'+t.steps.map((s)=>'<details><summary class="'+(s.ok?"":"bad")+'">'+esc(s.tool)+'</summary><pre>'+esc(JSON.stringify(s.input))+"\n\n"+esc(s.output)+'</pre></details>').join("")+"</div>":"")+"</div>").join(""):'<div class="empty">No messages.</div>';
     $("chat").scrollTop=$("chat").scrollHeight;
   }
   const agentFor=(card,id)=>card.agents.find((a)=>a.id===id);
   const targetFor=(card,topic)=>{for(const r of card.routing){if(r.match==="*"||r.match===topic){const a=agentFor(card,r.deliver_to); if(a) return {rule:r,agent:a};}} return null;};
   function renderPipe(card){
     $("p-locator").innerHTML='<code>'+esc(card.nanda.locator)+'</code>';
-    $("p-index").innerHTML='<strong>'+esc(new URL(card.nanda.index).host)+'</strong><br>entry → card URL';
+    $("p-index").innerHTML='<strong>'+esc(new URL(card.nanda.index).host)+'</strong>';
     $("p-version").textContent="v"+card.version;
     $("p-card").innerHTML='<strong>'+card.agents.length+' agent'+(card.agents.length===1?"":"s")+'</strong>, '+card.routing.length+' rule'+(card.routing.length===1?"":"s")+' · updated '+new Date(card.updated_at).toLocaleTimeString();
     const t=targetFor(card,"travel");
-    $("p-target").innerHTML=t?'a <strong>travel</strong> message goes to<br><span class="dot '+dotClass(t.agent.id)+'"></span> <strong>'+esc(t.agent.name)+'</strong>':"no rule matches";
+    $("p-target").innerHTML=t?'<span class="dot '+dotClass(t.agent.id)+'"></span> <strong>'+esc(t.agent.name)+'</strong><br>'+esc(t.agent.inbox.address):"no rule matches";
   }
   function renderCard(card,inboxes){
     $("cardv").textContent="card v"+card.version+" · "+new Date(card.updated_at).toLocaleTimeString();
-    $("rules").innerHTML='<div class="lbl" style="margin-top:0">Routing rules, first match wins</div>'+card.routing.map((r)=>{const a=agentFor(card,r.deliver_to); return '<div>'+(r.match==="*"?"Everything else":"Messages about <b>"+esc(r.match)+"</b>")+' → <span class="dot '+dotClass(r.deliver_to)+'"></span> <b>'+esc(a?a.name:r.deliver_to)+'</b></div>';}).join("");
+    $("rules").innerHTML='<div class="lbl" style="margin-top:0">Routing</div>'+card.routing.map((r)=>{const a=agentFor(card,r.deliver_to); return '<div>'+(r.match==="*"?"Everything else":"Messages about <b>"+esc(r.match)+"</b>")+' → <span class="dot '+dotClass(r.deliver_to)+'"></span> <b>'+esc(a?a.name:r.deliver_to)+'</b></div>';}).join("");
     $("agents").innerHTML=card.agents.map((a)=>{
       const topics=card.routing.filter((r)=>r.deliver_to===a.id).map((r)=>r.match==="*"?"everything else":r.match);
       const box=inboxes[a.id]; let inboxHtml;
@@ -210,7 +209,7 @@
   $("reset").onclick=()=>run("Start over",async()=>{await api("POST","/reset"); await api("POST","/merchant/reset"); return "Card v1, Travel26 forgot everyone.";});
   $("promo").onclick=()=>run("Travel26 send",async()=>summarize(await api("POST","/merchant/promo",{})));
   $("promo2").onclick=()=>run("Travel26 send",async()=>summarize(await api("POST","/merchant/promo",{subject:"Travel26: Kyoto in autumn, 6 nights with rail pass",body_text:"Hi John, a follow-up from Travel26. Kyoto in autumn, six nights with a rail pass, is $1,990 this month.\n\nSame locator as before. Your card decided where this landed."})));
-  (async()=>{cfg=await api("GET","/config"); $("brain").textContent=cfg.brain==="llm"?"model · "+cfg.model:"scripted brain"; $("foot").innerHTML="Index "+esc(cfg.index_base_url)+" · InkBox "+esc(cfg.inkbox_base_url)+" · merchant "+esc(cfg.travel26_url)+" · card connector for other agents "+esc(cfg.card_mcp_url); await refresh(); setInterval(refresh,4000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
+  (async()=>{cfg=await api("GET","/config"); $("brain").textContent=cfg.brain==="llm"?"model · "+cfg.model:"scripted brain"; $("foot").textContent="index "+cfg.index_base_url+" · inkbox "+cfg.inkbox_base_url+" · merchant "+cfg.travel26_url+" · card mcp "+cfg.card_mcp_url; await refresh(); setInterval(refresh,4000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
 })();
 </script>
 </body>

@@ -5,54 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Travel26 Merchant Desk</title>
 <style>
-  :root { --bg:#f5f7fa; --panel:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#0d9488; --accent-ink:#ffffff; --warn:#c2410c; --ok:#15803d; --chip:#e6f4f2; --muse:#7c3aed; --wajo:#ea580c; }
+  :root { --bg:#f5f7fa; --panel:#fff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#0d9488; --accent-ink:#fff; --warn:#c2410c; --ok:#15803d; --chip:#e6f4f2; --muse:#7c3aed; --wajo:#ea580c; --soft:#f9fafb; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
   header, .bar, main, footer { max-width:1200px; margin:0 auto; padding:0 16px; }
-  header { padding-top:20px; } h1 { margin:0 0 4px; font-size:22px; font-weight:650; } header p { margin:0; color:var(--muted); }
+  header { padding-top:20px; display:flex; align-items:baseline; gap:12px; } h1 { margin:0; font-size:22px; font-weight:650; } header .sub { color:var(--muted); font-size:13px; }
   .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:12px 16px; }
   button { font:inherit; font-weight:600; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); border-radius:8px; padding:8px 14px; cursor:pointer; }
-  button.secondary { background:transparent; color:var(--ink); border-color:var(--line); } button:disabled { opacity:.5; cursor:progress; }
+  button.secondary { background:var(--panel); color:var(--ink); border-color:var(--line); font-weight:500; } button:disabled { opacity:.5; cursor:progress; }
   .token { margin-left:auto; display:flex; gap:6px; align-items:center; color:var(--muted); font-size:13px; }
-  .token input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); width:170px; }
+  .token input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); width:150px; }
   .status { color:var(--muted); font-size:13px; min-height:22px; padding:0 16px 6px; max-width:1200px; margin:0 auto; } .status.err { color:var(--warn); }
   main { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; padding-bottom:24px; }
-  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; box-shadow:0 1px 2px rgba(0,0,0,.04); padding:14px 16px; min-height:220px; }
-  h2 { margin:0 0 2px; font-size:15px; font-weight:650; } .sub { color:var(--muted); font-weight:400; font-size:13px; }
-  .row { border-top:1px solid var(--line); padding:8px 0; } .row:first-of-type { border-top:0; }
-  .k { color:var(--muted); font-size:12.5px; } code { background:var(--chip); padding:1px 5px; border-radius:4px; font-size:12.5px; word-break:break-all; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; min-height:200px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  h2 { margin:0 0 8px; font-size:15px; font-weight:650; }
+  .row { border-top:1px solid var(--line); padding:9px 0; } .row:first-child { border-top:0; }
+  .k { color:var(--muted); font-size:12.5px; } code { background:var(--soft); border:1px solid var(--line); padding:1px 5px; border-radius:4px; font-size:12px; word-break:break-all; }
   .chip { display:inline-block; background:var(--chip); border-radius:999px; padding:2px 9px; font-size:12px; margin-right:4px; }
-  .chip.ok { color:var(--ok); } .chip.no { color:var(--warn); }
-  .trace { font-family:Consolas, "Courier New", monospace; font-size:12px; color:var(--muted); white-space:pre-wrap; margin:6px 0 0; }
+  .chip.ok { color:var(--ok); background:#f0fdf4; } .chip.no { color:var(--warn); background:#fff7ed; }
+  .dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; } .dot.muse { background:var(--muse);} .dot.wajo { background:var(--wajo);} .dot.other { background:var(--muted);}
+  .reach { margin-top:6px; font-size:14px; } .reach b { font-weight:650; }
+  .trace { font:12px/1.45 Consolas, "Courier New", monospace; color:var(--muted); white-space:pre-wrap; margin:6px 0 0; }
   .trace .hit { color:var(--ok); } .trace .err { color:var(--warn); }
-  .empty { color:var(--muted); font-style:italic; padding:10px 0; }
-  pre { background:var(--chip); border-radius:8px; padding:10px; font-size:12px; overflow:auto; max-height:360px; margin:8px 0 0; }
+  .empty { color:var(--muted); font-style:italic; padding:6px 0; }
+  pre { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px; font:12px/1.4 Consolas, "Courier New", monospace; overflow:auto; max-height:360px; margin:8px 0 0; }
   footer { color:var(--muted); font-size:12.5px; padding-bottom:24px; } a { color:var(--accent); }
 </style>
 </head>
 <body>
-<header>
-  <h1>Travel26 · merchant desk</h1>
-  <p>A Poppy company. Personal agents shop here through <code>/.well-known/poppy.json</code>. Poppy gives Travel26 no way to contact them afterwards; the NANDA reach extension does.</p>
-</header>
+<header><h1>Travel26</h1><span class="sub">merchant desk</span></header>
 <div class="bar">
-  <button id="promo">Send promotion to everyone we have met</button>
+  <button id="promo">Send promotion</button>
   <button id="promo2" class="secondary">Send another (Kyoto)</button>
   <button id="reset" class="secondary">Reset</button>
-  <label class="token">admin token <input id="token" type="password" placeholder="if required" autocomplete="off" /></label>
+  <label class="token">admin token <input id="token" type="password" autocomplete="off" /></label>
 </div>
 <div id="status" class="status"></div>
 <main>
   <section>
-    <h2>Personal agents we have met <span class="sub">what Travel26 stores</span></h2>
+    <h2>Known agents</h2>
     <div id="known"></div>
   </section>
   <section>
-    <h2>Last send <span class="sub">resolution trace</span></h2>
+    <h2>Last send</h2>
     <div id="log"></div>
   </section>
   <section>
-    <h2>poppy.json <span class="sub">what personal agents read</span></h2>
+    <h2>poppy.json</h2>
     <div class="k" id="poppyurl"></div>
     <pre id="poppy"></pre>
   </section>
@@ -67,19 +66,25 @@
   const headers=(hasBody)=>{const h={}; if(hasBody) h["content-type"]="application/json"; if(tokenInput.value) h["authorization"]="Bearer "+tokenInput.value; return h;};
   const setStatus=(t,err)=>{const el=$("status"); el.textContent=t; el.className="status"+(err?" err":"");};
   async function api(method,url,body){const res=await fetch(url,{method,headers:headers(body!==undefined),body:body===undefined?undefined:JSON.stringify(body)}); const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data.error||(method+" "+url+" -> "+res.status)); return data;}
-  const trace=(t)=>'<div class="trace">'+(t||[]).map((x)=>'<div class="'+(/^Route:|^InkBox: sent/.test(x)?"hit":/^Error/.test(x)?"err":"")+'">'+esc(x)+"</div>").join("")+"</div>";
+  const dotClass=(id)=>id==="muse"||id==="wajo"?id:"other";
+  const trace=(t)=>'<div class="trace">'+(t||[]).map((x)=>'<div class="'+(/^Route:|^InkBox: sent/.test(x)?"hit":/^Error|^Skipped/.test(x)?"err":"")+'">'+esc(x)+"</div>").join("")+"</div>";
   async function refresh(){
-    const [known,log]=await Promise.all([api("GET","/known-agents"),api("GET","/promo-log")]);
-    $("known").innerHTML=known.length?known.map((k)=>'<div class="row"><div><strong>'+esc(k.client_name)+'</strong> <span class="chip">Poppy user '+esc(k.sub.slice(0,10))+'…</span> '+(k.nanda_locator?'<span class="chip ok">reachable via NANDA</span>':'<span class="chip no">no way to reach</span>')+'</div><div class="k">client_id <code>'+esc(k.client_id)+'</code></div>'+(k.nanda_locator?'<div class="k">locator <code>'+esc(k.nanda_locator)+'</code></div>':'')+'<div class="k">'+k.sessions+' session(s), '+k.requests+' request(s) · last: '+esc(k.context)+'</div><div class="k">stored: client_id, user id, locator. Not stored: card, inbox address, endpoint.</div></div>').join(""):'<div class="empty">Nobody yet. Ask John\'s agent to shop here.</div>';
-    const last=log[0];
-    $("log").innerHTML=last?'<div class="row"><div><strong>'+esc(last.subject)+'</strong></div><div class="k">'+new Date(last.at).toLocaleTimeString()+' · to '+esc(last.client_name)+' · card v'+esc(last.card_version??"?")+' · '+(last.delivered_to?'delivered to <strong>'+esc(last.delivered_to.agent)+'</strong> '+esc(last.delivered_to.address):'<span style="color:var(--warn)">not delivered</span>')+'</div>'+trace(last.trace)+'</div>'+(log.length>1?'<div class="k" style="margin-top:8px">'+(log.length-1)+' earlier send(s)</div>':''):'<div class="empty">No promotion sent yet.</div>';
+    const [known,log,reach]=await Promise.all([api("GET","/known-agents"),api("GET","/promo-log"),api("GET","/reach").catch(()=>[])]);
+    const byLoc={}; (reach||[]).forEach((r)=>byLoc[r.locator]=r);
+    $("known").innerHTML=known.length?known.map((k)=>{const r=k.nanda_locator?byLoc[k.nanda_locator]:null;
+      return '<div class="row"><div><strong>'+esc(k.client_name)+'</strong> <span class="chip">user '+esc(k.sub.slice(0,8))+'…</span> '+(k.nanda_locator?'<span class="chip ok">locator held</span>':'<span class="chip no">no locator</span>')+'</div>'
+        +(k.nanda_locator?'<div class="k"><code>'+esc(k.nanda_locator)+'</code></div>':'')
+        +(r&&r.target?'<div class="reach">Travel reaches now: <span class="dot '+dotClass(r.target.agent)+'"></span><b>'+esc(r.target.name)+'</b> <span class="k">'+esc(r.target.address)+' · card v'+esc(r.card_version)+' · rule '+esc(r.target.rule)+'</span></div>'+(r.agents&&r.agents.length>1?'<div class="k">on the card: '+r.agents.map((a)=>'<span class="dot '+dotClass(a.id)+'"></span>'+esc(a.name)).join(", ")+'</div>':''):r&&r.error?'<div class="k" style="color:var(--warn)">resolve failed: '+esc(r.error)+'</div>':'')
+        +'<div class="k">'+k.sessions+' session(s) · '+k.requests+' request(s) · '+esc(k.context||"")+'</div></div>';}).join(""):'<div class="empty">Nobody yet.</div>';
+    const last=log.find((d)=>!(d.trace||[]).some((t)=>/^Skipped/.test(t)))||log[0];
+    $("log").innerHTML=last?'<div class="row"><div><strong>'+esc(last.subject)+'</strong></div><div class="k">'+new Date(last.at).toLocaleTimeString()+' · card v'+esc(last.card_version??"?")+' · '+(last.delivered_to?'<span class="dot '+dotClass(last.delivered_to.agent)+'"></span><strong>'+esc(last.delivered_to.agent)+'</strong> '+esc(last.delivered_to.address):'<span style="color:var(--warn)">not delivered</span>')+'</div>'+trace(last.trace)+'</div>':'<div class="empty">None.</div>';
   }
   async function run(label,fn){const bs=document.querySelectorAll("button"); bs.forEach((b)=>b.disabled=true); setStatus(label+"…"); try{const out=await fn(); setStatus(label+" done."+(out?" "+out:"")); await refresh();}catch(e){setStatus(label+" failed: "+e.message,true);}finally{bs.forEach((b)=>b.disabled=false);}}
-  const summarize=(r)=>{const d=r.results[0]; if(!d) return "nobody to send to"; return d.delivered_to?"Delivered to "+d.delivered_to.agent+" ("+d.delivered_to.address+") using card v"+d.card_version+".":d.error;};
-  $("promo").onclick=()=>run("Send",async()=>summarize(await api("POST","/promo")));
+  const summarize=(r)=>{const d=(r.results||[]).find((x)=>x.delivered_to||x.error)||r.results?.[0]; if(!d) return "nobody to send to"; return d.delivered_to?"Delivered to "+d.delivered_to.agent+" ("+d.delivered_to.address+") using card v"+d.card_version+".":d.error;};
+  $("promo").onclick=()=>run("Send",async()=>summarize(await api("POST","/promo",{})));
   $("promo2").onclick=()=>run("Send",async()=>summarize(await api("POST","/promo",{subject:"Travel26: Kyoto in autumn, 6 nights with rail pass",body_text:"Hi John, a follow-up from Travel26. Kyoto in autumn, six nights with a rail pass, is $1,990 this month.\n\nSame locator as before. Your card decided where this landed."})));
-  $("reset").onclick=()=>run("Reset",async()=>{await api("POST","/reset"); return "Travel26 forgot everyone.";});
-  (async()=>{const cfg=await api("GET","/config"); const poppy=await api("GET","/.well-known/poppy.json"); $("poppyurl").textContent=cfg.poppy_url; $("poppy").textContent=JSON.stringify(poppy,null,2); $("foot").innerHTML="Mode <strong>"+esc(cfg.mode)+"</strong> · sender "+esc(cfg.address)+" · Index "+esc(cfg.index_base_url)+" · MCP "+esc(cfg.mcp_url)+(cfg.admin_required?" · admin token required to send":""); await refresh(); setInterval(refresh,3000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
+  $("reset").onclick=()=>run("Reset",async()=>{await api("POST","/reset"); return "";});
+  (async()=>{const cfg=await api("GET","/config"); const poppy=await api("GET","/.well-known/poppy.json"); $("poppyurl").textContent=cfg.poppy_url; $("poppy").textContent=JSON.stringify(poppy,null,2); $("foot").textContent="sender "+cfg.address+" · index "+cfg.index_base_url+" · mcp "+cfg.mcp_url; await refresh(); setInterval(refresh,3000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
 })();
 </script>
 </body>

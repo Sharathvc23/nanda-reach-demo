@@ -213,6 +213,27 @@ export async function buildTravel26(config: Travel26Config): Promise<{ app: Fast
   }));
 
   app.get("/known-agents", async () => store.state.known_agents);
+
+  /** Where each known locator resolves right now: a dry run of the chain, cached briefly. */
+  const reachCache = new Map<string, { at: number; value: unknown }>();
+  app.get("/reach", async () => {
+    const locators = [...new Set(store.state.known_agents.map((k) => k.nanda_locator).filter((l): l is string => Boolean(l)))];
+    return Promise.all(
+      locators.map(async (locator) => {
+        const c = reachCache.get(locator);
+        if (c && Date.now() - c.at < 4000) return c.value;
+        let value: unknown;
+        try {
+          const r = await resolveLocator(config.indexBaseUrl, locator, ["travel", "promotion"]);
+          value = { locator, card_version: r.card?.version ?? null, card_url: r.card_url, target: r.target ? { agent: r.target.agent.id, name: r.target.agent.name, harness: r.target.agent.harness, address: r.target.agent.inbox.address, rule: r.target.rule.match } : null, agents: r.card?.agents?.map((a) => ({ id: a.id, name: a.name, address: a.inbox.address })) ?? [], checked_at: new Date().toISOString() };
+        } catch (e) {
+          value = { locator, error: (e as Error).message, checked_at: new Date().toISOString() };
+        }
+        reachCache.set(locator, { at: Date.now(), value });
+        return value;
+      }),
+    );
+  });
   app.get("/promo-log", async () => store.state.promo_log);
 
   /** Dry run of the resolution chain for one locator, without sending. */

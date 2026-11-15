@@ -99,8 +99,8 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
   };
   app.get("/merchant/state", async (_req, reply) => {
     try {
-      const [known, log, cfg] = await Promise.all([merchant("/known-agents"), merchant("/promo-log"), merchant("/config")]);
-      return { url: config.travel26Url, known_agents: known.body, promo_log: log.body, config: cfg.body };
+      const [known, log, cfg, reach] = await Promise.all([merchant("/known-agents"), merchant("/promo-log"), merchant("/config"), merchant("/reach")]);
+      return { url: config.travel26Url, known_agents: known.body, promo_log: log.body, config: cfg.body, reach: reach.body };
     } catch (e) {
       return reply.code(502).send({ url: config.travel26Url, error: (e as Error).message, known_agents: [], promo_log: [] });
     }
