@@ -92,6 +92,32 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
   // The card as an MCP connector, for a real personal agent such as Meta's Muse.
   registerCardMcp(app, { config, store, inkbox, poppy });
 
+  // The merchant's side, proxied so one page can show both halves of the story.
+  const merchant = async (path: string, init?: RequestInit) => {
+    const res = await fetch(`${config.travel26Url}${path}`, { ...init, signal: AbortSignal.timeout(20_000) });
+    return { status: res.status, body: await res.json().catch(() => ({})) };
+  };
+  app.get("/merchant/state", async (_req, reply) => {
+    try {
+      const [known, log, cfg] = await Promise.all([merchant("/known-agents"), merchant("/promo-log"), merchant("/config")]);
+      return { url: config.travel26Url, known_agents: known.body, promo_log: log.body, config: cfg.body };
+    } catch (e) {
+      return reply.code(502).send({ url: config.travel26Url, error: (e as Error).message, known_agents: [], promo_log: [] });
+    }
+  });
+  app.post<{ Body: { subject?: string; body_text?: string } }>("/merchant/promo", { preHandler: admin }, async (req, reply) => {
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (req.headers.authorization) headers.authorization = req.headers.authorization;
+    const r = await merchant("/promo", { method: "POST", headers, body: JSON.stringify(req.body ?? {}) });
+    return reply.code(r.status).send(r.body);
+  });
+  app.post("/merchant/reset", { preHandler: admin }, async (req, reply) => {
+    const headers: Record<string, string> = {};
+    if (req.headers.authorization) headers.authorization = req.headers.authorization;
+    const r = await merchant("/reset", { method: "POST", headers });
+    return reply.code(r.status).send(r.body);
+  });
+
   app.get("/state", async () => ({
     card: buildCard(config, store.state),
     chat: store.state.chat,
