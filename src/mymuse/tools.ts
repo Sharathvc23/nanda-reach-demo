@@ -6,7 +6,7 @@ import { buildCard, type MymuseState, type ToolStep } from "./card.js";
 import type { PoppyClient } from "./poppy-client.js";
 
 /**
- * What the agent can do. Both brains (Claude, scripted) call these; every call is recorded as a
+ * What the agent can do. Both brains (model-driven, scripted) call these; every call is recorded as a
  * step so the console can show the audience exactly what the agent did.
  */
 export class AgentTools {
