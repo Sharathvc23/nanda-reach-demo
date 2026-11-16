@@ -17,7 +17,8 @@ const t26 = loadTravel26Config({ MODE: "mock", PORT: "8095", MOCK_BASE_URL: mock
 const travel26 = await buildTravel26(t26);
 await travel26.app.listen({ port: t26.port, host: "127.0.0.1" });
 
-const mm = loadMymuseConfig({ MODE: "mock", PORT: "8096", MOCK_BASE_URL: mockBase, DATA_DIR: "./data/mymuse", PUBLIC_BASE_URL: "http://localhost:8096", TRAVEL26_URL: "http://localhost:8095" });
+// The mock Index accepts any login, but the move controls refuse to run without an account configured.
+const mm = loadMymuseConfig({ MODE: "mock", PORT: "8096", MOCK_BASE_URL: mockBase, DATA_DIR: "./data/mymuse", PUBLIC_BASE_URL: "http://localhost:8096", TRAVEL26_URL: "http://localhost:8095", INDEX_EMAIL: "john@mock.test", INDEX_PASSWORD: "mock" });
 const mymuse = await buildMymuse(mm);
 await mymuse.app.listen({ port: mm.port, host: "127.0.0.1" });
 mock.seed(mm.locator, `${mm.publicBaseUrl}/.well-known/agent-card.json`);

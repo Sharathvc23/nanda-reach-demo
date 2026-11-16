@@ -91,6 +91,24 @@ describe("moving the card", () => {
     expect(known.saved_card_url).toBe(`${mm.publicBaseUrl}/.well-known/agent-card.json`);
   });
 
+  it("a move whose Index update cannot run leaves the card where it was", async () => {
+    const saved = { ...mm.indexAccount };
+    mm.indexAccount.email = "";
+    try {
+      const m = await call(mm.publicBaseUrl, "POST", "/card/move");
+      expect(m.status).toBe(502);
+      expect(m.body.error).toMatch(/INDEX_EMAIL/);
+      expect(m.body.card_url).toBe(`${mm.publicBaseUrl}/.well-known/agent-card.json`);
+    } finally {
+      Object.assign(mm.indexAccount, saved);
+    }
+    expect((await fetch(`${mm.publicBaseUrl}/.well-known/agent-card.json`)).status).toBe(200);
+    expect((await fetch(`${mm.publicBaseUrl}/john/v2/agent-card.json`)).status).toBe(410);
+    expect((await call(mm.publicBaseUrl, "GET", "/index/status")).body.moved).toBe(false);
+    const d = await send("Nothing moved");
+    expect(d.delivered_to.agent).toBe("wajo");
+  });
+
   it("after John moves his card and updates the Index, the saved URL is gone but the locator still delivers", async () => {
     const m = await call(mm.publicBaseUrl, "POST", "/card/move");
     expect(m.status).toBe(200);

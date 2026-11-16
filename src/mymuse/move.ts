@@ -29,14 +29,22 @@ export function registerMoveControls(app: FastifyInstance, deps: { config: Mymus
     if (!res.ok) throw new Error(`Index update failed: ${res.status} ${JSON.stringify(body).slice(0, 200)}`);
     return { registry_url: body.registry_url ?? cardUrl, status: (body.extensions as Record<string, { status?: string }> | undefined)?.["org.projectnanda"]?.status ?? body.status ?? null };
   };
+  /**
+   * The card and the Index entry move together or not at all. The card is served at the new path
+   * before the Index points there, and goes back where it was if the Index update fails, so a
+   * failed move never leaves the entry pointing at a URL that answers 410.
+   */
   const moveTo = async (path: string, reply: FastifyReply) => {
+    const previous = store.state.card_path ?? DEFAULT_CARD_PATH;
     store.state.card_path = path;
     store.save();
     try {
       const r = await pointIndex(`${config.publicBaseUrl}${path}`);
       return { card_url: `${config.publicBaseUrl}${path}`, index: r };
     } catch (e) {
-      return reply.code(502).send({ card_url: `${config.publicBaseUrl}${path}`, error: (e as Error).message });
+      store.state.card_path = previous;
+      store.save();
+      return reply.code(502).send({ card_url: `${config.publicBaseUrl}${previous}`, error: `card left at ${config.publicBaseUrl}${previous}: ${(e as Error).message}` });
     }
   };
   app.post("/card/move", { preHandler: admin }, async (_req, reply) => moveTo(MOVED_CARD_PATH, reply));
