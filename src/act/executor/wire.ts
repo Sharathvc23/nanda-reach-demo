@@ -45,6 +45,7 @@ export const CONTROL_METHODS = [
   "sendApproved",
   "report",
   "readBooking",
+  "mcpTool",
   "kill",
 ] as const;
 export type ControlMethod = (typeof CONTROL_METHODS)[number];

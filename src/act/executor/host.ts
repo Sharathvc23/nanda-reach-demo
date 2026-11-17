@@ -178,6 +178,10 @@ export class ExecutorHost {
         const scopes = Array.isArray(args[1]) && args[1].every((s) => typeof s === "string") ? args[1] : [];
         return [await company(args[0]), scopes, args[2] ?? null];
       }
+      case "mcpTool": {
+        const args2 = args[2] && typeof args[2] === "object" && !Array.isArray(args[2]) ? args[2] : {};
+        return [await company(args[0]), text(args[1], "tool"), args2, args[3] ?? null];
+      }
       default:
         // hasAccessToken, pairwiseUserId, carryFence, occurrenceStatus, readReceipt, startBooking,
         // sendApproved, readBooking: the Company first, then plain data.
