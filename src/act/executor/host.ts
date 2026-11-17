@@ -170,7 +170,9 @@ export class ExecutorHost {
       case "request": {
         const o = (args[3] ?? {}) as Record<string, unknown>;
         const opts = { body: o.body, act: o.act ?? null, approval: o.approval ?? null, signedOut: o.signedOut === true };
-        return [await company(args[0]), text(args[1], "method"), text(args[2], "path"), opts];
+        const path = text(args[2], "path");
+        if (!/^\/(?!\/)/.test(path)) throw new Error("path must start with a single /");
+        return [await company(args[0]), text(args[1], "method"), path, opts];
       }
       case "beginSignIn": {
         const scopes = Array.isArray(args[1]) && args[1].every((s) => typeof s === "string") ? args[1] : [];

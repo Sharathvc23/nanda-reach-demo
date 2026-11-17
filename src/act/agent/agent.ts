@@ -394,8 +394,13 @@ export class PersonalAgent implements AgentHandle {
     opts: { body?: unknown; act?: ActBinding | null; approval?: Approval | null; signedOut?: boolean; accessToken?: string; aud?: string[]; tamper?: (h: Record<string, string>) => void } = {},
   ): Promise<Response> {
     this.alive();
+    // A path, never an authority: "@other.example/x" or "//other.example" must not move the
+    // request, with its Session JWT and access token, to another host.
+    if (!/^\/(?!\/)/.test(path)) throw new Error(`request path must start with a single "/": ${path}`);
+    const target = new URL(path, company.origin);
+    if (target.origin !== new URL(company.origin).origin) throw new Error(`request path leaves ${company.origin}`);
     const c = await this.session(company);
-    const url = `${company.origin}${path}`;
+    const url = target.toString();
     const token = opts.signedOut ? null : (opts.accessToken ?? c.accessToken);
     const extensions: Record<string, string> = {};
     if (company.operations) extensions[OPERATIONS_EXTENSION] = OPERATIONS_VERSION;
