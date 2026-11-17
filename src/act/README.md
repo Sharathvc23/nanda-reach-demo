@@ -1,6 +1,6 @@
 # Vendored: the ACT continuity extension's Personal Agent side
 
-Copied unchanged from `Sharathvc23/act-poppy-demo` at commit `91bdc71` (MIT): the Personal Agent
+Copied unchanged from `Sharathvc23/act-poppy-demo` at commit `d575be1` (MIT): the Personal Agent
 (`agent/agent.ts`), the executor host and its control channel (`executor/`), and the shared
 modules they import (`shared/`). Do not edit here; change act-poppy-demo and copy again.
 
