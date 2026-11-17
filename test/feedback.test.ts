@@ -50,6 +50,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  // Idle keep-alive connections from fetch would otherwise hold close() past the hook timeout.
+  for (const a of [mmApp, t26App, mockApp]) a.server.closeAllConnections();
   await Promise.all([mmApp.close(), t26App.close(), mockApp.close()]);
   rmSync(dataDir, { recursive: true, force: true });
 });

@@ -1,5 +1,6 @@
 import { env, loadShared, stripSlash, type Overrides, type SharedConfig } from "../shared/env.js";
 import type { Mailbox } from "../shared/inkbox.js";
+import type { ActExecutorConfig } from "./act.js";
 
 export type Brain = "llm" | "scripted";
 
@@ -19,6 +20,8 @@ export interface MymuseConfig extends SharedConfig {
   shareLocator: boolean;
   /** John's NANDA Index account, used when he moves his card so his entry follows. */
   indexAccount: { email: string; password: string; orgId: string };
+  /** Host John's agents as continuity executors for act.stellarminds.ai (ACT_EXECUTOR=1). Null: off. */
+  act: ActExecutorConfig | null;
 }
 
 export function loadMymuseConfig(overrides: Overrides = {}): MymuseConfig {
@@ -38,5 +41,13 @@ export function loadMymuseConfig(overrides: Overrides = {}): MymuseConfig {
     model: env("AGENT_MODEL", "claude-opus-5-5", overrides),
     shareLocator: env("SHARE_LOCATOR", "true", overrides) !== "false",
     indexAccount: { email: env("INDEX_EMAIL", "", overrides), password: env("INDEX_PASSWORD", "", overrides), orgId: env("INDEX_ORG_ID", "mymuse", overrides) },
+    act:
+      env("ACT_EXECUTOR", "", overrides) === "1"
+        ? {
+            controlToken: env("ACT_CONTROL_TOKEN", "", overrides),
+            ownerPrefix: env("ACT_OWNER_PREFIX", "https://act.stellarminds.ai/runs/", overrides),
+            companies: env("ACT_COMPANIES", "", overrides).split(",").map((c) => stripSlash(c.trim())).filter(Boolean),
+          }
+        : null,
   };
 }

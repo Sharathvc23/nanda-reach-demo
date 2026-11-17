@@ -11,6 +11,8 @@ export interface CardAgent {
   harness: string;
   inbox: { kind: "inkbox"; address: string };
   topics: string[];
+  /** The agent's Poppy client and the extensions it implements, when it has one (ACT_EXECUTOR). */
+  poppy?: { client_id: string; extensions: string[] };
 }
 
 export interface RoutingRule {
