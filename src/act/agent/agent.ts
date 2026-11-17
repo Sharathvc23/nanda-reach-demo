@@ -436,6 +436,13 @@ export class PersonalAgent implements AgentHandle {
     } catch {
       body = { raw: text };
     }
+    // A gateway in front of the Company (a load balancer, a platform edge) that lost the Company's
+    // answer replies 502 or 504, or 503 without the Company's own JSON error. That is no answer
+    // from the Company: the request may or may not have entered, exactly as if the connection had
+    // dropped. Treating it as a refusal would be the timeout-as-failure mistake Operations §7 forbids.
+    if (res.status === 502 || res.status === 504 || (res.status === 503 && typeof body.error !== "string")) {
+      throw new NetworkError(`${method} ${path}: no answer from the Company (a gateway answered ${res.status})`);
+    }
     return { status: res.status, headers: res.headers, body };
   }
 
