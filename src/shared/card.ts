@@ -43,6 +43,8 @@ export interface AgentCard {
   agents: CardAgent[];
   routing: RoutingRule[];
   updated_at: string;
+  /** A2A card signatures; see shared/cardsig.ts. */
+  signatures?: { protected: string; signature: string }[];
 }
 
 /**

@@ -220,3 +220,15 @@ describe("the three acts", () => {
     expect(known.body).toEqual([]);
   });
 });
+
+describe("signed card", () => {
+  it("mymuse serves a signed card and Travel26 verifies it before routing", async () => {
+    const card = await call(mm.publicBaseUrl, "GET", "/.well-known/agent-card.json");
+    expect(card.status).toBe(200);
+    expect(card.body.signatures?.length).toBe(1);
+    const r = await call(t26.publicBaseUrl, "GET", `/resolve?locator=${encodeURIComponent(mm.locator)}&topics=travel`);
+    expect(r.body.signature).toBe("valid");
+    expect(r.body.trace.some((line: string) => line.startsWith("Card signature: valid"))).toBe(true);
+    expect(r.body.target).not.toBeNull();
+  });
+});

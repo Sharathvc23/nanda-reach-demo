@@ -1,4 +1,5 @@
 import { routeCard, type AgentCard, type CardAgent, type RoutingRule } from "../shared/card.js";
+import { verifyCard, type SignatureStatus } from "../shared/cardsig.js";
 
 /**
  * The merchant-side resolution chain. Travel26 stores only a NANDA locator. Every time it wants
@@ -15,6 +16,8 @@ export interface Resolution {
   target: { agent: CardAgent; rule: RoutingRule } | null;
   /** The card declines this topic: no delivery, and that is the person's choice, not a failure. */
   declined: RoutingRule | null;
+  /** Card signature check: an "invalid" card is never routed to. */
+  signature: SignatureStatus | null;
   trace: string[];
 }
 
@@ -26,7 +29,7 @@ interface IndexResolveResponse {
 export async function resolveLocator(indexBaseUrl: string, locator: string, topics: string[], fetchFn: typeof fetch = fetch): Promise<Resolution> {
   const trace: string[] = [];
   const indexUrl = `${indexBaseUrl}/api/v1/resolve?locator=${encodeURIComponent(locator)}`;
-  const out: Resolution = { locator, index_url: indexUrl, card_url: null, card: null, target: null, declined: null, trace };
+  const out: Resolution = { locator, index_url: indexUrl, card_url: null, card: null, target: null, declined: null, signature: null, trace };
 
   trace.push(`Index: GET ${indexUrl}`);
   const res = await fetchFn(indexUrl, { headers: { accept: "application/json", "user-agent": "travel26/0.1" }, signal: AbortSignal.timeout(10_000) });
@@ -49,6 +52,13 @@ export async function resolveLocator(indexBaseUrl: string, locator: string, topi
   }
   const card = (await cres.json()) as AgentCard;
   out.card = card;
+  const sig = await verifyCard(card as unknown as Record<string, unknown>, cardUrl, fetchFn);
+  out.signature = sig.status;
+  if (sig.status === "invalid") {
+    trace.push(`Card signature: INVALID (${sig.detail}). Not routing: the card may have been altered.`);
+    return out;
+  }
+  trace.push(sig.status === "valid" ? `Card signature: valid (key ${sig.kid!.slice(0, 12)}...)` : "Card signature: none (unsigned card)");
   if (!Array.isArray(card.agents) || !Array.isArray(card.routing)) {
     trace.push("Card has no agents/routing fields; cannot route");
     return out;

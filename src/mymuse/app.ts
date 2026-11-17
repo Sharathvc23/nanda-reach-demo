@@ -11,6 +11,7 @@ import { AgentTools } from "./tools.js";
 import { makeBrain } from "./brain.js";
 import { PoppyClient } from "./poppy-client.js";
 import { registerCardMcp } from "./mcp.js";
+import { signCard } from "../shared/cardsig.js";
 import { registerMoveControls } from "./move.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -28,14 +29,16 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
 
   // John's agent card. The NANDA Index entry's registry_url points here.
   // The card is served only at its current path; the other known path answers 410 Gone, as a moved card would.
+  // Signed with the Poppy root key, whose public half is at /poppy/jwks.json on this host.
+  const signedCard = async () => signCard(buildCard(config, store.state), await poppy.rootKey(), `${config.publicBaseUrl}/poppy/jwks.json`);
   const cardAt = (path: string) => async (_req: import("fastify").FastifyRequest, reply: import("fastify").FastifyReply) => {
     const current = store.state.card_path ?? DEFAULT_CARD_PATH;
     if (path !== current) return reply.code(410).send({ error: "gone", moved_to: `${config.publicBaseUrl}${current}` });
-    return buildCard(config, store.state);
+    return signedCard();
   };
   app.get(DEFAULT_CARD_PATH, cardAt(DEFAULT_CARD_PATH));
   app.get(MOVED_CARD_PATH, cardAt(MOVED_CARD_PATH));
-  app.get("/cards/john", async () => buildCard(config, store.state));
+  app.get("/cards/john", async () => signedCard());
   registerMoveControls(app, { config, store });
 
   // Poppy Personal Agent identity (spec 4.1).
