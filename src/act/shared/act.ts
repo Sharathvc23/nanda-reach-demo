@@ -187,9 +187,12 @@ export interface FenceStatement {
   executor: string;
   iat: number;
   jti: string;
+  /** Late adoption (docs/21 §3.6): only on the first fence for an account. */
+  adopt_prior_activity?: true;
 }
 
 const FENCE_CLAIMS = ["aud", "tenant_id", "owner_id", "job_id", "executor_epoch", "recovery_generation", "executor", "iat", "jti"];
+const FENCE_CLAIMS_ADOPTING = [...FENCE_CLAIMS, "adopt_prior_activity"];
 const MAX_SAFE = Number.MAX_SAFE_INTEGER;
 
 export async function signFenceStatement(claims: FenceStatement, privateJwk: JWK, kid: string): Promise<string> {
@@ -224,8 +227,9 @@ export async function verifyFenceStatement(statement: unknown, ownerKey: PublicE
   } catch {
     throw new SignatureError("the fence statement payload is not JSON");
   }
-  if (!claims || typeof claims !== "object" || Array.isArray(claims) || !sameKeys(claims, FENCE_CLAIMS)) throw new SignatureError(`the fence statement must hold exactly ${FENCE_CLAIMS.join(", ")}`);
+  if (!claims || typeof claims !== "object" || Array.isArray(claims) || !(sameKeys(claims, FENCE_CLAIMS) || sameKeys(claims, FENCE_CLAIMS_ADOPTING))) throw new SignatureError(`the fence statement must hold exactly ${FENCE_CLAIMS.join(", ")}, and optionally adopt_prior_activity`);
   const c = claims as Record<string, unknown>;
+  if ("adopt_prior_activity" in c && c.adopt_prior_activity !== true) throw new SignatureError("adopt_prior_activity must be true when present");
   for (const k of ["aud", "tenant_id", "owner_id", "job_id", "executor", "jti"]) {
     if (typeof c[k] !== "string" || !(c[k] as string) || (c[k] as string).length > 256) throw new SignatureError(`${k} must be a nonempty bounded string`);
   }

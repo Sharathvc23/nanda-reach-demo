@@ -50,6 +50,8 @@ export interface CompanyDoc {
   authorizationEndpoint: string;
   tokenEndpoint: string;
   continuity: { profile: string; fence_endpoint: string; occurrence_endpoint: string; receipt_endpoint: string; participation_level: string } | null;
+  /** The Company's MCP server, from poppy.json `apis` (type `mcp`), if it has one. */
+  mcp: string | null;
   operations: boolean;
 }
 
@@ -152,6 +154,8 @@ export interface AgentHandle {
   sendApproved(company: CompanyDoc, claim: Claim, act: ActBinding | null, approval: Approval): Promise<Response>;
   report(operationId: string, report: { kind: "performed"; native_reference: string; native_status: string } | { kind: "unknown"; detail: string }): Promise<void>;
   readBooking(company: CompanyDoc, bookingId: string): Promise<Response>;
+  /** Call one of the Company's MCP tools (Operations over MCP: an approval goes in `_meta`). */
+  mcpTool(company: CompanyDoc, name: string, args: Record<string, unknown>, approval?: Approval | null): Promise<Response>;
   kill(): Promise<void>;
 }
 
@@ -285,6 +289,10 @@ export class PersonalAgent implements AgentHandle {
       tokenEndpoint: as.token_endpoint,
       continuity: cont ? { profile: cont.profile, fence_endpoint: cont.fence_endpoint, occurrence_endpoint: cont.occurrence_endpoint, receipt_endpoint: cont.receipt_endpoint, participation_level: cont.participation_level } : null,
       operations: Boolean(doc.extensions?.[OPERATIONS_EXTENSION]?.some((e: { version: string }) => e.version === OPERATIONS_VERSION)),
+      mcp: (() => {
+        const entry = (doc.apis ?? []).find((a: { type?: string; url?: string }) => a.type === "mcp" && typeof a.url === "string");
+        return entry && new URL(entry.url).origin === u.origin ? entry.url : null;
+      })(),
     };
     this.docs.set(u.origin, company);
     this.log(`discovered ${company.name} (Poppy ${doc.protocol_version}; operations v3: ${company.operations}; continuity: ${company.continuity?.participation_level ?? "no"})`);
@@ -528,6 +536,26 @@ export class PersonalAgent implements AgentHandle {
   async readBooking(company: CompanyDoc, bookingId: string): Promise<Response> {
     const res = await this.request(company, "GET", `/api/bookings/${encodeURIComponent(bookingId)}`);
     this.log(`GET /api/bookings/${bookingId} -> ${res.status} ${res.body.booking?.status ?? res.body.error ?? ""}`);
+    return res;
+  }
+
+  /**
+   * One MCP tool call, as a plain Poppy agent makes it: JSON-RPC `tools/call` inside the Poppy
+   * Session, with an approval in `_meta` (Operations §6). The continuity headers are not defined
+   * over MCP, so this never sends them. Returns the HTTP response; the tool result is `body.result`.
+   */
+  async mcpTool(company: CompanyDoc, name: string, args: Record<string, unknown>, approval: Approval | null = null): Promise<Response> {
+    if (!company.mcp) throw new Error(`${company.name} lists no MCP server`);
+    const meta = approval ? { "personalagentprotocol.org/approval": { operation_id: approval.operation_id, revision: approval.revision, approver: approval.approver, approved_at: approval.approved_at, ...(approval.input_type ? { input_type: approval.input_type } : {}), reference: approval.reference } } : undefined;
+    let res: Response;
+    try {
+      res = await this.request(company, "POST", new URL(company.mcp).pathname, { body: { jsonrpc: "2.0", id: randomId(8), method: "tools/call", params: { name, arguments: args, ...(meta ? { _meta: meta } : {}) } } });
+    } catch (e) {
+      if (e instanceof NetworkError) this.log(`MCP ${name}${approval ? ` with approval of ${approval.operation_id}` : ""} -> no response: did it enter?`);
+      throw e;
+    }
+    const r = res.body.result as { isError?: boolean; structuredContent?: Record<string, any> } | undefined;
+    this.log(`MCP ${name}${approval ? ` with approval of ${approval.operation_id}` : ""} -> ${r ? (r.isError ? `error: ${r.structuredContent?.error ?? "tool error"}` : "ok") : res.status}`);
     return res;
   }
 
