@@ -55,7 +55,10 @@ const publicOnlyLookup: LookupFunction = (hostname, options, callback) => {
   });
 };
 
-const publicOnly = new Agent({ connect: { lookup: publicOnlyLookup } });
+// No connection reuse (pipelining 0). Platform edges close idle connections on their own schedule;
+// a request sent on one they just closed fails with no answer, and for a control call that may
+// already have acted, a blind retry is not safe. A fresh connection per request avoids the race.
+const publicOnly = new Agent({ connect: { lookup: publicOnlyLookup }, pipelining: 0 });
 
 /** A live fetch: public addresses only, no redirects followed. */
 async function publicFetch(url: string, init: RequestInit | undefined): Promise<Response> {
