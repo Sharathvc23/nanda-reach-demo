@@ -13,6 +13,7 @@ import { PoppyClient } from "./poppy-client.js";
 import { registerCardMcp } from "./mcp.js";
 import { signCard } from "../shared/cardsig.js";
 import { registerMoveControls } from "./move.js";
+import { registerActExecutor } from "./act.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -44,7 +45,17 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
   // Poppy Personal Agent identity (spec 4.1).
   app.get("/poppy/client.json", async (_req, reply) => reply.header("cache-control", "public, max-age=300").send(await poppy.clientMetadata()));
   app.get("/poppy/jwks.json", async (_req, reply) => reply.header("cache-control", "public, max-age=300").send(await poppy.jwks()));
-  app.get("/poppy/callback", async () => ({ ok: true, note: "Direct Sign-In redirect target. This demo uses signed-out Sessions only." }));
+  // With ACT_EXECUTOR on, John on Muse also signs in (Direct Sign-In) for continuity runs; the
+  // redirect goes to the run that started it. Otherwise this demo uses signed-out Sessions only.
+  const actHost = config.act ? await registerActExecutor(app, { config, act: config.act, store, poppy }) : null;
+  app.get("/poppy/callback", async (req, reply) => {
+    if (!actHost) return { ok: true, note: "Direct Sign-In redirect target. This demo uses signed-out Sessions only." };
+    try {
+      return await actHost.callback("muse", req.query as Record<string, string>);
+    } catch (e) {
+      return reply.code(400).send({ error: "sign_in_failed", error_description: (e as Error).message });
+    }
+  });
 
   app.get("/config", async () => ({
     service: "mymuse",

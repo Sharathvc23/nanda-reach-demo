@@ -1,4 +1,5 @@
 import type { JWK } from "jose";
+import { CONTINUITY_TAG, executorClientIds } from "./act.js";
 import type { AgentCard, CardAgent, RoutingRule } from "../shared/card.js";
 import type { MymuseConfig } from "./config.js";
 
@@ -32,7 +33,8 @@ export interface MymuseState {
   version: number;
   updated_at: string;
   chat: ChatTurn[];
-  keys: { root: JWK | null };
+  /** `wajo`: John on Wajo's Poppy client key, created when ACT_EXECUTOR is on. */
+  keys: { root: JWK | null; wajo?: JWK | null };
   companies: Record<string, CompanyState>;
   /** Where the card lives on this host. John can move it; the Index entry follows, merchants that saved the URL do not. */
   card_path: string;
@@ -96,8 +98,17 @@ export function buildCard(config: MymuseConfig, state: MymuseState): AgentCard {
     poppy: { client_id: `${config.publicBaseUrl}/poppy/client.json` },
     owner: { name: config.owner },
     chat: { url: `${config.publicBaseUrl}/chat` },
-    agents: state.agents,
+    agents: config.act ? withPoppyClients(config, state.agents) : state.agents,
     routing: state.routing,
     updated_at: state.updated_at,
   };
+}
+
+/**
+ * With ACT_EXECUTOR on, each of John's agents that mymuse hosts names its Poppy client and the
+ * continuity extension, so John's continuity service can pick a successor from this card.
+ */
+function withPoppyClients(config: MymuseConfig, agents: CardAgent[]): CardAgent[] {
+  const ids = executorClientIds(config.publicBaseUrl);
+  return agents.map((a) => (ids[a.id] ? { ...a, poppy: { client_id: ids[a.id], extensions: ["operations;v=3", CONTINUITY_TAG] } } : a));
 }
