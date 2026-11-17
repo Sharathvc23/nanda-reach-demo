@@ -59,6 +59,15 @@
   .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-top:26px; } @media (max-width: 900px) { .grid { grid-template-columns:1fr 1fr; } } @media (max-width: 560px) { .grid { grid-template-columns:1fr; } }
   .grid a.card { display:block; text-decoration:none; color:inherit; } .grid a.card:hover { border-color:var(--accent); } .grid .card .num { color:var(--muted); } .grid .card h3 { color:var(--accent); } .grid .card p { font-size:14px; margin:0; color:#374151; }
   footer { padding:34px 0 48px; color:var(--muted); font-size:13.5px; border-top:1px solid var(--line); } footer .wrap { display:flex; flex-wrap:wrap; gap:8px 22px; }
+  .scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:22px; } .scroll table { margin-top:0; min-width:560px; }
+  @media (max-width: 560px) {
+    .wrap { padding:0 16px; } nav.top .wrap { gap:10px; } nav.top .btn.secondary { display:none; } nav.top .btn { padding:7px 11px; }
+    section { padding:44px 0; } section.tight { padding:32px 0; } .hero { padding:40px 0 36px; } h1 { margin:14px 0 14px; } .lede { font-size:17px; }
+    .btns { gap:8px; } .btn { padding:10px 14px; font-size:14.5px; } .live { font-size:13px; padding:9px 12px; }
+    .film video { border-radius:10px; margin:16px auto 12px; } .beat .say { padding:16px; } .beat .trace { padding:14px; font-size:11.5px; }
+    .scroll table { min-width:0; } thead { display:none; } tbody tr { display:block; padding:10px 14px; border-top:1px solid var(--line); } tbody tr:first-child { border-top:0; }
+    td { display:block; border:0; padding:2px 0; } td:first-child, td:nth-child(2) { display:inline-block; margin-right:10px; } td:first-child { font-weight:650; }
+  }
 </style>
 </head>
 <body>
@@ -78,7 +87,7 @@
 
 <section class="hero">
   <div class="wrap">
-    <span class="eyebrow">NANDA Index · Poppy extension nandaindex.org/reach · live</span>
+    <span class="eyebrow">Poppy extension · nandaindex.org/reach</span>
     <h1>A company reaches a person's agent again, <em>after the person moved.</em></h1>
     <p class="lede">Travel26 kept one thing about John: his NANDA locator. Not his card, not his inbox, not his endpoint. When it wants to reach him, it resolves the locator in the NANDA Index at send time and follows the routing rules on his card. John changes agents, declines a topic or moves his card, and the next message still lands where he said.</p>
     <div class="btns">
@@ -115,16 +124,16 @@
 
 <section class="film" id="film">
   <div class="wrap">
-    <div class="num">The demo in motion</div>
-    <h2>IETF NandaIndex demo 2026, in 80 seconds.</h2>
-    <p class="muted" style="max-width:62ch">John's agent shops at Travel26 over Poppy and shares only his locator. Travel26's first promotion lands in Muse. John adds a second agent on Wajo and reroutes travel; the next promotion, to the same locator, lands in Wajo. John declines promotions and Travel26 holds. John moves his card: a merchant that saved the URL loses him, Travel26 does not.</p>
+    <div class="num">Film · 80 seconds</div>
+    <h2>IETF NandaIndex demo 2026</h2>
+    <p class="muted" style="max-width:62ch">John's agent shares only his locator with Travel26. John then adds a second agent, declines a topic and moves his card. Each time, Travel26's next message to the same locator lands where he said; a merchant that saved the URL loses him at the move.</p>
     <video controls preload="metadata" poster="/demo/poster.png" playsinline>
       <source src="/demo/ietf-nandaindex-demo-2026.mp4" type="video/mp4" />
       <source src="/demo/ietf-nandaindex-demo-2026.webm" type="video/webm" />
       Your browser does not play embedded video. <a href="/demo/ietf-nandaindex-demo-2026.mp4">Download the MP4</a>.
     </video>
     <div class="caption">
-      <span>A screen recording of the live services on 15 November 2026: real NANDA Index entry at api.nandaindex.org, real InkBox mailboxes. Nothing is simulated.</span>
+      <span>Screen recording of the live services, 15 November 2026: real Index entry at api.nandaindex.org, real InkBox mailboxes.</span>
       <span><a href="/demo/ietf-nandaindex-demo-2026.mp4">MP4</a> · <a href="/demo/ietf-nandaindex-demo-2026.webm">WebM</a> · <a href="https://github.com/Sharathvc23/nanda-reach-demo">source</a></span>
     </div>
   </div>
@@ -133,8 +142,8 @@
 <section id="how">
   <div class="wrap">
     <div class="num">01 / How a send works</div>
-    <h2>Four hops, every time. The company never stores the destination.</h2>
-    <p class="lede">The locator is the only thing that persists on the company's side. Everything after it is looked up at the moment of sending, so the person's latest choices always win.</p>
+    <h2>Four hops on every send. The company never stores the destination.</h2>
+    <p class="lede">Only the locator persists on the company's side. Everything after it is looked up at send time, so the person's latest choices win.</p>
     <div class="steps">
       <div class="card"><div class="num">1 · Locator</div><h3>What Travel26 holds</h3><p>A NANDA locator, given once over Poppy: in the client metadata document, or by calling the <code>share_nanda_locator</code> tool.</p><code>urn:air:host39.org:personal:&lt;id&gt;</code></div>
       <div class="card"><div class="num">2 · Index</div><h3>Locator → card URL</h3><p>One GET to the NANDA Index. The entry says where the person's agent card lives today and whether the entry is active.</p><code>GET /api/v1/resolve?locator=…
@@ -152,7 +161,7 @@ InkBox: sent</code></div>
   <div class="wrap">
     <div class="num">02 / The five beats</div>
     <h2>What John changed, and what Travel26 saw next.</h2>
-    <p class="lede">Each beat is one change on John's side followed by one send from Travel26, to the same stored locator. The right column is the company's own log, abridged.</p>
+    <p class="lede">One change on John's side, then one send from Travel26 to the same stored locator. The dark column is Travel26's own log, abridged.</p>
     <div class="beats">
       <div class="card beat">
         <div class="say"><div class="num">Beat 1 · Baseline</div><h3>John's agent shops, and opts in</h3><p>John's agent on Muse opens a signed-out Poppy session with Travel26, searches its MCP API and shares the locator. Travel26's first promotion goes to Muse under card v1. <span class="pill muse">Muse</span></p><div class="who">Rule in force: <code>* → muse</code></div></div>
@@ -197,8 +206,8 @@ Travel26: locator stored. No card, no inbox, no endpoint.</div>
   <div class="wrap">
     <div class="num">03 / What the company keeps</div>
     <h2>Three fields. The rest is fetched at send time and not retained.</h2>
-    <p class="lede">The extension text is short on purpose: a Company MUST NOT store the card, the inbox address or the endpoint, and MUST honour <code>none</code>.</p>
-    <table>
+    <p class="lede">The extension says it in two rules: a Company MUST NOT store the card, the inbox address or the endpoint, and MUST honour <code>none</code>.</p>
+    <div class="scroll"><table>
       <thead><tr><th>Field</th><th>Kept by Travel26</th><th>Why</th></tr></thead>
       <tbody>
         <tr><td><code>client_id</code></td><td><span class="yes">Yes</span></td><td>Which client application the session belonged to; part of Poppy's session record.</td></tr>
@@ -208,7 +217,7 @@ Travel26: locator stored. No card, no inbox, no endpoint.</div>
         <tr><td>Agents, routing rules</td><td><span class="no">No</span></td><td>Read from the card at send time; the desk shows them in the trace but they are not retained.</td></tr>
         <tr><td>Inbox address, endpoint</td><td><span class="no">No</span></td><td>Known only for the duration of one send.</td></tr>
       </tbody>
-    </table>
+    </table></div>
   </div>
 </section>
 
@@ -230,7 +239,7 @@ Travel26: locator stored. No card, no inbox, no endpoint.</div>
         <ul>
           <li>Not authorization, consent or confidentiality. The locator is resolvable by anyone who has it, and Poppy authenticates the client's assertion of the locator, not control of it. The claim is portable reachability.</li>
           <li>Not freshness proof. Resolving on every send follows the person's latest choices; it does not prove the Index answer is current or authentic.</li>
-          <li>Known gap: the sender logs the Index entry's status but does not yet refuse entries that are not <code>active</code>, which the extension requires. Tracked in the repository.</li>
+          <li>Known gap: the sender logs the Index entry's status but does not yet refuse entries that are not <code>active</code>, which the extension requires.</li>
         </ul>
       </div>
     </div>
@@ -239,8 +248,8 @@ Travel26: locator stored. No card, no inbox, no endpoint.</div>
 
 <section id="resources">
   <div class="wrap">
-    <div class="num">05 / Read the text, run the code</div>
-    <h2>The extension is a page; the demo is a repository.</h2>
+    <div class="num">05 / Resources</div>
+    <h2>Spec, code, slides, drafts.</h2>
     <div class="grid">
       <a class="card" href="https://nandaindex.org/reach"><div class="num">Extension · spec</div><h3>nandaindex.org/reach</h3><p>The Poppy extension: the header that opts in, what a Company may keep, and that <code>none</code> is a decline.</p></a>
       <a class="card" href="https://github.com/Sharathvc23/nanda-reach-demo"><div class="num">Reference implementation · GitHub</div><h3>nanda-reach-demo</h3><p>Both services, the mock Index for local runs, the test suite and the recording script. MIT.</p></a>
@@ -254,7 +263,6 @@ Travel26: locator stored. No card, no inbox, no endpoint.</div>
 
 <footer>
   <div class="wrap">
-    <span>Reach John · a NANDA Index demo for IETF 127</span>
     <span><a href="/console">John's console</a></span>
     <span><a id="merchant-foot" href="https://travel26-production.up.railway.app/">Travel26's desk</a></span>
     <span><a href="/.well-known/agent-card.json">John's agent card</a></span>
