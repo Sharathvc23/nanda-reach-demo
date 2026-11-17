@@ -2,8 +2,18 @@
  * The executor control channel's wire format: JSON, with the one non-JSON value the agent API
  * returns (a `Headers` object inside a `Response`) carried as its entries.
  */
+/**
+ * A `Headers` from any fetch implementation: the global one, or undici's (which a live fetch
+ * returns, see shared/net.ts), which is a different class, so `instanceof` alone misses it.
+ */
+function isHeaders(value: unknown): value is Headers {
+  if (value instanceof Headers) return true;
+  const h = value as Record<string, unknown> | null;
+  return !!h && typeof h === "object" && typeof h.get === "function" && typeof h.has === "function" && typeof h.entries === "function" && typeof h.forEach === "function";
+}
+
 export function toWire(value: unknown): unknown {
-  if (value instanceof Headers) return { __headers: [...value.entries()] };
+  if (isHeaders(value)) return { __headers: [...value.entries()] };
   if (Array.isArray(value)) return value.map(toWire);
   if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, toWire(v)]));
   return value;
