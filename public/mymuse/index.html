@@ -3,207 +3,283 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Reach John Demo</title>
+<title>Reach John · a company reaches a person's agent again, after the person moved</title>
+<meta name="description" content="Travel26 kept one thing about John: his NANDA locator. When it wants to reach him it resolves the locator in the NANDA Index at send time and follows his card's routing rules. A live demo of the nandaindex.org/reach extension for Poppy." />
 <style>
-  :root { --bg:#f5f7fa; --panel:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --accent-ink:#ffffff; --merchant:#0d9488; --warn:#c2410c; --ok:#15803d; --chip:#eef2ff; --muse:#7c3aed; --wajo:#ea580c; --soft:#f9fafb; --hl:#fff3bf; }
+  :root { --bg:#f5f7fa; --panel:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --accent-ink:#ffffff; --merchant:#0d9488; --warn:#c2410c; --ok:#15803d; --chip:#eef2ff; --soft:#f9fafb; --hl:#fff3bf; --muse:#7c3aed; --wajo:#ea580c; --dark:#0f172a; --dark-2:#1e293b; --dark-ink:#e2e8f0; --dark-muted:#94a3b8; }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-  .wrap { max-width:1500px; margin:0 auto; padding:0 16px; }
-  header { padding:18px 0 4px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; }
-  h1 { margin:0; font-size:22px; font-weight:650; letter-spacing:-0.01em; }
-  .status { color:var(--muted); font-size:13px; min-height:22px; padding:4px 0; } .status.err { color:var(--warn); }
-  .pipe { display:grid; grid-template-columns:repeat(4, 1fr); background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin:8px 0 14px; }
-  .step { padding:12px 16px; border-right:1px solid var(--line); position:relative; } .step:last-child { border-right:0; }
-  .step .n { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; }
-  .step .t { font-weight:650; margin:2px 0 3px; font-size:14.5px; } .step .v { font-size:12.5px; color:var(--muted); overflow-wrap:anywhere; } .step .v code { display:inline-block; max-width:100%; white-space:normal; line-height:1.4; } .step .v strong { color:var(--ink); font-weight:600; }
-  .step::after { content:"›"; position:absolute; right:-7px; top:50%; transform:translateY(-50%); background:var(--panel); color:var(--muted); font-size:22px; line-height:1; z-index:1; } .step:last-child::after { content:""; }
-  .pill { display:inline-block; border-radius:999px; padding:1px 8px; font-size:12px; font-weight:600; background:var(--chip); color:var(--accent); } .pill.fixed { background:#ecfdf5; color:var(--ok); } .pill.bad { background:#fff1ec; color:var(--warn); }
-  main { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr); gap:14px; align-items:start; padding-bottom:28px; }
-  @media (max-width: 1100px) { main { grid-template-columns:1fr 1fr; } } @media (max-width: 760px) { main { grid-template-columns:1fr; } .pipe { grid-template-columns:1fr 1fr; } .step::after { content:""; } .step { border-bottom:1px solid var(--line); } }
-  section { background:var(--panel); border:1px solid var(--line); border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); min-width:0; }
-  .hd { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px 10px; border-bottom:1px solid var(--line); } .hd h2 { margin:0; font-size:15.5px; font-weight:650; display:flex; align-items:center; gap:8px; } .hd .sub { color:var(--muted); font-size:12.5px; font-weight:400; }
-  .bd { padding:14px 16px; min-width:0; }
-  .sq { width:12px; height:12px; border-radius:3px; display:inline-block; } .sq.merchant { background:var(--merchant); } .sq.agent { background:var(--accent); }
-  .row { border-top:1px solid var(--line); padding:9px 0; } .row:first-child { border-top:0; }
-  .k { color:var(--muted); font-size:12.5px; } code { background:var(--soft); border:1px solid var(--line); padding:1px 5px; border-radius:5px; font-size:12px; word-break:break-all; }
-  .chip { display:inline-block; background:var(--soft); border:1px solid var(--line); border-radius:999px; padding:1px 8px; font-size:12px; margin-right:4px; } .chip.ok { color:var(--ok); border-color:#bbf7d0; background:#f0fdf4; } .chip.no { color:var(--warn); border-color:#fed7aa; background:#fff7ed; }
-  .lbl { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:10px 0 4px; } .lbl:first-child { margin-top:0; }
-  .empty { color:var(--muted); font-style:italic; font-size:13px; }
-  #log { container-type:inline-size; } .sends { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; } @container (min-width:620px) { .sends { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } }
-  .send { border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--soft); min-width:0; overflow-wrap:anywhere; } .send.cur { background:var(--panel); border-color:var(--accent); }
-  .send .s { font-weight:650; font-size:13.5px; } .send .m { color:var(--muted); font-size:12px; margin:2px 0 4px; }
-  .trace { font:11.5px/1.45 Consolas, "Courier New", monospace; color:var(--muted); white-space:pre-wrap; overflow-wrap:anywhere; } .trace div { padding:0 3px; border-radius:3px; } .trace .hit { color:var(--ok); } .trace .err { color:var(--warn); } .trace .chg { background:var(--hl); color:var(--ink); }
-  button { font:inherit; font-weight:600; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); border-radius:10px; padding:8px 13px; cursor:pointer; font-size:13.5px; } button.secondary { background:var(--panel); color:var(--ink); border-color:var(--line); font-weight:500; } button.merchant { background:var(--merchant); border-color:var(--merchant); } button:disabled { opacity:.5; cursor:progress; }
-  .btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-  .chat { display:flex; flex-direction:column; gap:10px; max-height:440px; overflow:auto; padding:6px 2px; }
-  .turn { max-width:90%; padding:9px 12px; border-radius:14px; white-space:pre-wrap; line-height:1.45; font-size:14px; overflow-wrap:anywhere; } .turn.user { align-self:flex-end; background:var(--accent); color:var(--accent-ink); border-bottom-right-radius:4px; } .turn.assistant { align-self:flex-start; background:var(--soft); border:1px solid var(--line); border-bottom-left-radius:4px; }
-  .steps { margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; } .steps details { font-size:12px; } .steps summary { cursor:pointer; list-style:none; background:var(--chip); color:var(--accent); border-radius:999px; padding:2px 9px; font-weight:600; } .steps summary.bad { background:#fff1ec; color:var(--warn); } .steps pre { background:var(--bg); border-radius:8px; padding:8px; overflow:auto; max-height:220px; margin:6px 0 0; font:11.5px/1.4 Consolas, "Courier New", monospace; width:min(520px, 80vw); }
-  form { display:flex; gap:8px; margin-top:12px; } input[type=text] { flex:1; font:inherit; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--ink); }
-  .token { display:flex; gap:6px; align-items:center; color:var(--muted); font-size:12.5px; } .token input { font:inherit; padding:4px 8px; border:1px solid var(--line); border-radius:6px; width:150px; }
-  .agent { border:1px solid var(--line); border-radius:10px; padding:11px 13px; margin-bottom:10px; transition:box-shadow .3s, border-color .3s; } .agent.arrived { border-color:var(--accent); box-shadow:0 0 0 4px rgba(37,99,235,.18); }
-  .agent .top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; } .dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex:none; } .dot.muse { background:var(--muse); } .dot.wajo { background:var(--wajo); } .dot.other { background:var(--muted); } .dot.none { background:transparent; border:2px solid var(--warn); }
-  .agent .name { font-weight:650; } .agent .addr { color:var(--muted); font-size:12.5px; word-break:break-all; margin-top:1px; } .gets { margin-top:6px; font-size:13.5px; } .gets b { font-weight:650; }
-  .inbox { margin-top:8px; border-top:1px dashed var(--line); padding-top:6px; } .msg { padding:6px 0; border-top:1px solid var(--line); border-radius:6px; } .msg:first-of-type { border-top:0; } .msg .s { font-weight:600; font-size:13.5px; } .msg .m { color:var(--muted); font-size:12px; } .msg .b { font-size:13px; margin-top:3px; white-space:pre-wrap; color:#374151; }
-  .msg.new { background:var(--hl); padding:6px 8px; } .msg.new .s::before { content:"NEW "; color:var(--warn); font-size:11px; letter-spacing:.08em; font-weight:700; }
-  .rules { padding:9px 12px; background:var(--soft); border:1px solid var(--line); border-radius:10px; font-size:13.5px; margin-bottom:10px; } .rules div { padding:1px 0; }
-  .note { font-size:12.5px; color:var(--muted); } details.raw summary { cursor:pointer; color:var(--muted); font-size:12.5px; margin-top:8px; } pre.rawcard { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px; font:11.5px/1.4 Consolas, "Courier New", monospace; overflow:auto; max-height:300px; }
-  details.demo { margin-top:14px; } details.demo summary { cursor:pointer; color:var(--muted); font-size:12.5px; } details.demo .btns { margin-top:8px; }
-  footer { color:var(--muted); font-size:12.5px; padding:0 0 28px; } a { color:var(--accent); }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  a { color:var(--accent); }
+  code, .mono { font:12.5px/1.5 Consolas, "Courier New", monospace; }
+  code { background:var(--soft); border:1px solid var(--line); border-radius:5px; padding:1px 5px; overflow-wrap:anywhere; }
+  .wrap { max-width:1100px; margin:0 auto; padding:0 20px; }
+  .eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:12px; letter-spacing:.09em; text-transform:uppercase; font-weight:700; color:var(--accent); background:var(--chip); border-radius:999px; padding:4px 12px; }
+  .eyebrow::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--accent); }
+  .num { font-size:12px; letter-spacing:.09em; text-transform:uppercase; font-weight:700; color:var(--muted); }
+  h1 { font-size:clamp(32px, 5vw, 54px); line-height:1.08; letter-spacing:-0.025em; font-weight:750; margin:18px 0 18px; max-width:18ch; }
+  h1 em { font-style:normal; color:var(--accent); }
+  h2 { font-size:clamp(24px, 3vw, 32px); line-height:1.15; letter-spacing:-0.02em; font-weight:720; margin:8px 0 10px; max-width:26ch; }
+  h3 { font-size:17px; margin:0 0 6px; font-weight:680; }
+  p { margin:0 0 12px; } .lede { font-size:19px; color:#374151; max-width:62ch; } .muted { color:var(--muted); } .small { font-size:13.5px; }
+  .btn { display:inline-flex; align-items:center; gap:8px; font-weight:650; font-size:15px; border-radius:10px; padding:11px 18px; text-decoration:none; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); }
+  .btn.secondary { background:var(--panel); color:var(--ink); border-color:var(--line); } .btn.merchant { background:var(--merchant); border-color:var(--merchant); color:#fff; }
+  .btns { display:flex; flex-wrap:wrap; gap:10px; margin:22px 0 0; }
+  nav.top { position:sticky; top:0; z-index:5; background:rgba(245,247,250,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  nav.top .wrap { display:flex; align-items:center; gap:18px; height:58px; }
+  nav.top .brand { font-weight:750; letter-spacing:-0.01em; text-decoration:none; color:var(--ink); font-size:17px; display:flex; align-items:center; gap:9px; }
+  nav.top .brand .mark { width:26px; height:26px; border-radius:7px; background:var(--accent); color:#fff; display:grid; place-items:center; font-size:13px; font-weight:800; }
+  nav.top .links { display:flex; gap:16px; margin-left:8px; font-size:14px; } nav.top .links a { color:var(--muted); text-decoration:none; } nav.top .links a:hover { color:var(--ink); }
+  nav.top .cta { margin-left:auto; display:flex; gap:8px; } nav.top .btn { padding:7px 13px; font-size:13.5px; }
+  @media (max-width: 820px) { nav.top .links { display:none; } }
+  section { padding:64px 0; } section.tight { padding:40px 0; } section + section { border-top:1px solid var(--line); }
+  .hero { padding:72px 0 56px; }
+  .live { margin-top:30px; display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; font-size:13.5px; color:var(--muted); background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 14px; }
+  .live .dot { width:9px; height:9px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 4px rgba(21,128,61,.15); } .live b { color:var(--ink); font-weight:650; } .live.off .dot { background:var(--muted); box-shadow:none; }
+  .then { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:34px; } @media (max-width: 760px) { .then { grid-template-columns:1fr; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px; box-shadow:0 1px 2px rgba(0,0,0,.04); min-width:0; }
+  .card .num { margin-bottom:6px; } .card.bad { border-color:#fed7aa; } .card.good { border-color:#bfdbfe; }
+  .path { margin:10px 0 0; padding:0; list-style:none; font-size:14.5px; } .path li { padding:6px 0; border-top:1px dashed var(--line); display:flex; gap:10px; } .path li:first-child { border-top:0; } .path .k { color:var(--muted); min-width:92px; font-size:12.5px; padding-top:2px; }
+  .verdict { margin-top:12px; font-weight:650; } .verdict.bad { color:var(--warn); } .verdict.good { color:var(--ok); }
+  .film { background:var(--dark); color:var(--dark-ink); } .film h2, .film .num { color:var(--dark-ink); } .film .num { color:var(--dark-muted); } .film .muted { color:var(--dark-muted); } .film a { color:#93c5fd; }
+  .film video { display:block; width:100%; max-width:960px; aspect-ratio:16/9; border-radius:14px; background:#000; margin:22px auto 14px; box-shadow:0 20px 60px rgba(0,0,0,.45); }
+  .film .caption { max-width:960px; margin:0 auto; display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px 20px; font-size:13.5px; color:var(--dark-muted); }
+  .steps { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-top:26px; } @media (max-width: 900px) { .steps { grid-template-columns:1fr 1fr; } } @media (max-width: 560px) { .steps { grid-template-columns:1fr; } }
+  .steps .card { position:relative; } .steps .card .num { color:var(--accent); } .steps .card p { font-size:14.5px; margin:0 0 8px; } .steps .card > code { display:block; white-space:pre-wrap; padding:8px 10px; font-size:11.5px; }
+  .beats { display:grid; gap:14px; margin-top:26px; }
+  .beat { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:0; overflow:hidden; padding:0; } @media (max-width: 820px) { .beat { grid-template-columns:1fr; } }
+  .beat .say { padding:20px 22px; } .beat .say p { font-size:15px; margin:0 0 8px; } .beat .say .who { font-size:12.5px; color:var(--muted); }
+  .beat .trace { background:var(--dark-2); color:var(--dark-muted); padding:16px 18px; font:12px/1.55 Consolas, "Courier New", monospace; white-space:pre-wrap; overflow-wrap:anywhere; } .beat .trace b { color:#86efac; font-weight:500; } .beat .trace i { color:#fdba74; font-style:normal; } .beat .trace .lab { color:#64748b; font-size:11px; letter-spacing:.08em; text-transform:uppercase; display:block; margin-bottom:6px; }
+  .pill { display:inline-block; border-radius:999px; padding:1px 9px; font-size:12px; font-weight:650; background:var(--chip); color:var(--accent); vertical-align:middle; } .pill.muse { background:#f3e8ff; color:var(--muse); } .pill.wajo { background:#ffedd5; color:var(--wajo); } .pill.none { background:#fff1ec; color:var(--warn); }
+  table { width:100%; border-collapse:collapse; margin-top:22px; background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; font-size:14.5px; }
+  th, td { text-align:left; padding:11px 14px; border-top:1px solid var(--line); vertical-align:top; } th { background:var(--soft); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border-top:0; }
+  td .yes { color:var(--ok); font-weight:650; } td .no { color:var(--warn); font-weight:650; } td .later { color:var(--muted); font-weight:650; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:22px; } @media (max-width: 760px) { .two { grid-template-columns:1fr; } }
+  .status .card h3 { display:flex; gap:8px; align-items:center; } .status ul { margin:0; padding-left:18px; font-size:14.5px; } .status li { margin:4px 0; }
+  .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-top:26px; } @media (max-width: 900px) { .grid { grid-template-columns:1fr 1fr; } } @media (max-width: 560px) { .grid { grid-template-columns:1fr; } }
+  .grid a.card { display:block; text-decoration:none; color:inherit; } .grid a.card:hover { border-color:var(--accent); } .grid .card .num { color:var(--muted); } .grid .card h3 { color:var(--accent); } .grid .card p { font-size:14px; margin:0; color:#374151; }
+  footer { padding:34px 0 48px; color:var(--muted); font-size:13.5px; border-top:1px solid var(--line); } footer .wrap { display:flex; flex-wrap:wrap; gap:8px 22px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <h1>Reach John</h1>
-  <label class="token" style="margin-left:auto">admin token <input id="token" type="password" autocomplete="off" /></label>
-</header>
-<div id="status" class="status"></div>
 
-<div class="pipe">
-  <div class="step"><div class="n">Locator</div><div class="t">What the merchant holds <span class="pill fixed">fixed</span></div><div class="v" id="p-locator">…</div></div>
-  <div class="step"><div class="n">Index</div><div class="t">Resolves locator → card</div><div class="v" id="p-index">…</div></div>
-  <div class="step"><div class="n">Card</div><div class="t">John's agent card <span class="pill" id="p-version">v?</span></div><div class="v" id="p-card">…</div></div>
-  <div class="step"><div class="n">Inbox</div><div class="t">Where travel goes now</div><div class="v" id="p-target">…</div></div>
-</div>
-
-<main>
-  <section>
-    <div class="hd"><h2><span class="sq merchant"></span>Travel26 <span class="sub">merchant view · read-only</span></h2><a class="sub" id="t26link" href="#" target="_blank" rel="noopener">open desk</a></div>
-    <div class="bd">
-      <div class="lbl">Known agents</div>
-      <div id="known"></div>
-      <div class="lbl">Sends</div>
-      <div id="log"></div>
+<nav class="top">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="mark">R</span>Reach John</a>
+    <div class="links">
+      <a href="#film">Film</a><a href="#how">How it works</a><a href="#beats">Five beats</a><a href="#stored">What is stored</a><a href="#status">Status</a><a href="#resources">Resources</a>
     </div>
-  </section>
+    <div class="cta">
+      <a class="btn secondary" id="merchant-top" href="https://travel26-production.up.railway.app/">Travel26 desk</a>
+      <a class="btn" href="/console">Open the live console</a>
+    </div>
+  </div>
+</nav>
 
-  <section>
-    <div class="hd"><h2><span class="sq agent"></span>John's agent <span class="sub" id="brain"></span></h2></div>
-    <div class="bd">
-      <div class="chat" id="chat"></div>
-      <form id="form"><input type="text" id="input" placeholder="Message" autocomplete="off" /><button type="submit" id="send">Send</button></form>
-      <div class="btns">
-        <button class="secondary" data-say="Find me flights to Lisbon in December on Travel26">1 · Shop at Travel26</button>
-        <button class="secondary" data-say="Check my inbox">Check inbox</button>
-        <button class="secondary" id="say-wajo">3 · Route travel via Wajo</button>
-        <button class="secondary" data-say="Route travel messages back to Muse. Keep Wajo on my card.">Route back to Muse</button>
-        <button class="secondary" data-say="Stop sending me promotions">No promotions</button>
-        <button class="secondary" data-say="Allow promotions again">Allow promotions</button>
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">NANDA Index · Poppy extension nandaindex.org/reach · live</span>
+    <h1>A company reaches a person's agent again, <em>after the person moved.</em></h1>
+    <p class="lede">Travel26 kept one thing about John: his NANDA locator. Not his card, not his inbox, not his endpoint. When it wants to reach him, it resolves the locator in the NANDA Index at send time and follows the routing rules on his card. John changes agents, declines a topic or moves his card, and the next message still lands where he said.</p>
+    <div class="btns">
+      <a class="btn" href="#film">Watch the film · 80 s</a>
+      <a class="btn secondary" href="/console">Open the live console</a>
+      <a class="btn secondary" id="merchant-hero" href="https://travel26-production.up.railway.app/">Travel26's desk</a>
+    </div>
+    <div class="live" id="live"><span class="dot"></span><span id="live-text">Reading the live Index entry and John's card…</span></div>
+
+    <div class="then">
+      <div class="card bad">
+        <div class="num">A merchant that saved the address</div>
+        <h3>Keeps the card URL from first contact</h3>
+        <ul class="path">
+          <li><span class="k">Stored</span><span>https://…/.well-known/agent-card.json</span></li>
+          <li><span class="k">John moves</span><span>Card now at a new URL; the old one answers <code>410 Gone</code></span></li>
+          <li><span class="k">Next send</span><span>GET the saved URL → 410</span></li>
+        </ul>
+        <div class="verdict bad">No path to John. He is lost.</div>
       </div>
-      <details class="demo"><summary>Demo controls</summary>
-        <div class="btns">
-          <button class="secondary" id="move">Move card to a new URL</button>
-          <button class="secondary" id="moveback">Move card back</button>
-          <button class="merchant" id="promo">Travel26: send promotion</button>
-          <button class="merchant" id="promo2">Travel26: send another</button>
-          <button class="secondary" id="reset">Start over</button>
-        </div>
-      </details>
+      <div class="card good">
+        <div class="num">Travel26, with nandaindex.org/reach</div>
+        <h3>Keeps the locator, resolves at send time</h3>
+        <ul class="path">
+          <li><span class="k">Stored</span><span><code>urn:air:host39.org:personal:…</code></span></li>
+          <li><span class="k">John moves</span><span>He re-points his own Index entry</span></li>
+          <li><span class="k">Next send</span><span>Index → new card URL → rule <code>travel</code> → John on Wajo</span></li>
+        </ul>
+        <div class="verdict good">Delivered. Nothing changed on Travel26's side.</div>
+      </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section>
-    <div class="hd"><h2>John's agents <span class="sub" id="cardv"></span></h2></div>
-    <div class="bd">
-      <div class="rules" id="rules"></div>
-      <div id="agents"></div>
-      <details class="raw"><summary>Raw</summary><div class="note" id="cardmeta" style="margin:6px 0"></div><pre class="rawcard" id="cardraw"></pre></details>
+<section class="film" id="film">
+  <div class="wrap">
+    <div class="num">The demo in motion</div>
+    <h2>IETF NandaIndex demo 2026, in 80 seconds.</h2>
+    <p class="muted" style="max-width:62ch">John's agent shops at Travel26 over Poppy and shares only his locator. Travel26's first promotion lands in Muse. John adds a second agent on Wajo and reroutes travel; the next promotion, to the same locator, lands in Wajo. John declines promotions and Travel26 holds. John moves his card: a merchant that saved the URL loses him, Travel26 does not.</p>
+    <video controls preload="metadata" poster="/demo/poster.png" playsinline>
+      <source src="/demo/ietf-nandaindex-demo-2026.mp4" type="video/mp4" />
+      <source src="/demo/ietf-nandaindex-demo-2026.webm" type="video/webm" />
+      Your browser does not play embedded video. <a href="/demo/ietf-nandaindex-demo-2026.mp4">Download the MP4</a>.
+    </video>
+    <div class="caption">
+      <span>A screen recording of the live services on 15 November 2026: real NANDA Index entry at api.nandaindex.org, real InkBox mailboxes. Nothing is simulated.</span>
+      <span><a href="/demo/ietf-nandaindex-demo-2026.mp4">MP4</a> · <a href="/demo/ietf-nandaindex-demo-2026.webm">WebM</a> · <a href="https://github.com/Sharathvc23/nanda-reach-demo">source</a></span>
     </div>
-  </section>
-</main>
-<footer id="foot"></footer>
-</div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="num">01 / How a send works</div>
+    <h2>Four hops, every time. The company never stores the destination.</h2>
+    <p class="lede">The locator is the only thing that persists on the company's side. Everything after it is looked up at the moment of sending, so the person's latest choices always win.</p>
+    <div class="steps">
+      <div class="card"><div class="num">1 · Locator</div><h3>What Travel26 holds</h3><p>A NANDA locator, given once over Poppy: in the client metadata document, or by calling the <code>share_nanda_locator</code> tool.</p><code>urn:air:host39.org:personal:&lt;id&gt;</code></div>
+      <div class="card"><div class="num">2 · Index</div><h3>Locator → card URL</h3><p>One GET to the NANDA Index. The entry says where the person's agent card lives today and whether the entry is active.</p><code>GET /api/v1/resolve?locator=…
+→ entry.registry_url, status</code></div>
+      <div class="card"><div class="num">3 · Card</div><h3>Agents and routing rules</h3><p>An A2A agent card the person maintains. It lists their agents and which inbox each message topic goes to. <code>none</code> means: do not send.</p><code>routing: [
+  { match: "travel", deliver_to: "wajo" },
+  { match: "promotion", deliver_to: "none" } ]</code></div>
+      <div class="card"><div class="num">4 · Inbox</div><h3>The message lands</h3><p>Travel26 writes to the inbox the first matching rule names, over InkBox. The trace of every hop is shown on its desk.</p><code>Route: [travel] → rule "travel" → John on Wajo
+InkBox: sent</code></div>
+    </div>
+  </div>
+</section>
+
+<section id="beats">
+  <div class="wrap">
+    <div class="num">02 / The five beats</div>
+    <h2>What John changed, and what Travel26 saw next.</h2>
+    <p class="lede">Each beat is one change on John's side followed by one send from Travel26, to the same stored locator. The right column is the company's own log, abridged.</p>
+    <div class="beats">
+      <div class="card beat">
+        <div class="say"><div class="num">Beat 1 · Baseline</div><h3>John's agent shops, and opts in</h3><p>John's agent on Muse opens a signed-out Poppy session with Travel26, searches its MCP API and shares the locator. Travel26's first promotion goes to Muse under card v1. <span class="pill muse">Muse</span></p><div class="who">Rule in force: <code>* → muse</code></div></div>
+        <div class="trace"><span class="lab">Travel26 log</span>Index: match=exact status=active card=…/.well-known/agent-card.json
+Card: version 1, 1 agent(s), 1 rule(s)
+Route: topics [travel, promotion] -> rule "*" -> <b>John on Muse</b>
+InkBox: sent
+Saved-URL merchant: GET …/agent-card.json -> 200</div>
+      </div>
+      <div class="card beat">
+        <div class="say"><div class="num">Beat 2 · Second agent</div><h3>John adds Wajo and reroutes travel</h3><p>John tells his agent to add a second agent on Wajo and send travel there. His card goes to v2 with a <code>travel</code> rule. Travel26 sends again, to the same locator, and the message lands in Wajo. Muse is not contacted. <span class="pill wajo">Wajo</span></p><div class="who">Rule in force: <code>travel → wajo</code></div></div>
+        <div class="trace"><span class="lab">Travel26 log</span>Index: match=exact status=active card=…/.well-known/agent-card.json
+Card: version 2, 2 agent(s), 2 rule(s)
+Route: topics [travel, promotion] -> rule "travel" -> <b>John on Wajo</b>
+InkBox: sent</div>
+      </div>
+      <div class="card beat">
+        <div class="say"><div class="num">Beat 3 · Declined topic</div><h3>John says no to promotions</h3><p>A <code>promotion → none</code> rule goes on the card. Travel26 reads it at send time and holds: nothing is sent, and the desk shows why. Travel messages are unaffected. <span class="pill none">held</span></p><div class="who">Rule in force: <code>promotion → none</code></div></div>
+        <div class="trace"><span class="lab">Travel26 log</span>Card: version 3, 2 agent(s), 3 rule(s)
+Route: topics [promotion] -> rule "promotion" -> <i>none</i>
+<i>Held: John declines promotion. Nothing sent.</i></div>
+      </div>
+      <div class="card beat">
+        <div class="say"><div class="num">Beat 4 · Card move</div><h3>John moves his card to a new URL</h3><p>The card moves, John re-points his own Index entry, and the old URL answers 410. A merchant that saved the URL at first contact now has no path to John. Travel26 resolves the locator, finds the new URL and delivers. <span class="pill wajo">Wajo</span></p><div class="who">Control arm on the same send: the saved URL</div></div>
+        <div class="trace"><span class="lab">Travel26 log</span><i>Saved-URL merchant: GET …/.well-known/agent-card.json -> 410 (would have lost John)</i>
+Index: match=exact status=active card=…/john/v2/agent-card.json
+Card: GET …/john/v2/agent-card.json -> 200
+Route: topics [travel] -> rule "travel" -> <b>John on Wajo</b>
+InkBox: sent</div>
+      </div>
+      <div class="card beat">
+        <div class="say"><div class="num">Beat 5 · A third-party agent</div><h3>Meta's Muse shares a locator by tool call</h3><p>Not our agent: the production Muse agent shops at Travel26, is told about the <code>share_nanda_locator</code> tool, and calls it. Travel26 stores the locator and nothing else. No extension header was needed; the tool is the fallback for agents that do not declare it.</p><div class="who">Human-prompted; the tool call is the agent's</div></div>
+        <div class="trace"><span class="lab">Travel26 log</span>poppy-identity: client Muse, user &lt;sub&gt;
+mcp: share_nanda_locator(<b>urn:air:host39.org:personal:…</b>)
+Travel26: locator stored. No card, no inbox, no endpoint.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="stored">
+  <div class="wrap">
+    <div class="num">03 / What the company keeps</div>
+    <h2>Three fields. The rest is fetched at send time and not retained.</h2>
+    <p class="lede">The extension text is short on purpose: a Company MUST NOT store the card, the inbox address or the endpoint, and MUST honour <code>none</code>.</p>
+    <table>
+      <thead><tr><th>Field</th><th>Kept by Travel26</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><code>client_id</code></td><td><span class="yes">Yes</span></td><td>Which client application the session belonged to; part of Poppy's session record.</td></tr>
+        <tr><td><code>sub</code></td><td><span class="yes">Yes</span></td><td>The pseudonymous user id in the Poppy session, so repeat visits match up.</td></tr>
+        <tr><td><code>nanda_locator</code></td><td><span class="yes">Yes</span></td><td>The one contact identifier. Resolvable by anyone, revocable and re-pointable by John alone.</td></tr>
+        <tr><td>Card URL</td><td><span class="no">No</span></td><td>Looked up in the Index on every send. Storing it is exactly what loses John in beat 4.</td></tr>
+        <tr><td>Agents, routing rules</td><td><span class="no">No</span></td><td>Read from the card at send time; the desk shows them in the trace but they are not retained.</td></tr>
+        <tr><td>Inbox address, endpoint</td><td><span class="no">No</span></td><td>Known only for the duration of one send.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="status tight" id="status">
+  <div class="wrap">
+    <div class="num">04 / Status</div>
+    <h2>What this is, and what it is not.</h2>
+    <div class="two">
+      <div class="card">
+        <h3>What this is</h3>
+        <ul>
+          <li>A running reference implementation of the <a href="https://nandaindex.org/reach">nandaindex.org/reach</a> extension, version 1: a Poppy company (Travel26) and a person's agent (John's, on this host) with a card registered in the live NANDA Index.</li>
+          <li>Real mailboxes on InkBox. Every send on <a id="merchant-status" href="https://travel26-production.up.railway.app/">Travel26's desk</a> shows its trace, including a control arm that fetches the URL a careless merchant would have saved.</li>
+          <li>Replayable. Beats 1 to 4 can be driven from <a href="/console">John's console</a> with the admin token; the card and the Index entry are the live ones.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>What it is not</h3>
+        <ul>
+          <li>Not authorization, consent or confidentiality. The locator is resolvable by anyone who has it, and Poppy authenticates the client's assertion of the locator, not control of it. The claim is portable reachability.</li>
+          <li>Not freshness proof. Resolving on every send follows the person's latest choices; it does not prove the Index answer is current or authentic.</li>
+          <li>Known gap: the sender logs the Index entry's status but does not yet refuse entries that are not <code>active</code>, which the extension requires. Tracked in the repository.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="resources">
+  <div class="wrap">
+    <div class="num">05 / Read the text, run the code</div>
+    <h2>The extension is a page; the demo is a repository.</h2>
+    <div class="grid">
+      <a class="card" href="https://nandaindex.org/reach"><div class="num">Extension · spec</div><h3>nandaindex.org/reach</h3><p>The Poppy extension: the header that opts in, what a Company may keep, and that <code>none</code> is a decline.</p></a>
+      <a class="card" href="https://github.com/Sharathvc23/nanda-reach-demo"><div class="num">Reference implementation · GitHub</div><h3>nanda-reach-demo</h3><p>Both services, the mock Index for local runs, the test suite and the recording script. MIT.</p></a>
+      <a class="card" href="https://github.com/Sharathvc23/nanda-reach-demo/blob/main/docs/ietfdawn2026.pdf"><div class="num">Talk · IETF 127</div><h3>NandaIndex demo slides</h3><p>The deck this demo was built for: the reach-back problem, identity-first resolution and the five beats.</p></a>
+      <a class="card" href="https://datatracker.ietf.org/doc/draft-raskar-agentic-web-federated-resolution/"><div class="num">Internet-Draft</div><h3>Federated resolution for the agentic web</h3><p>Raskar's resolution model: subject identity, resolution registry, authority evidence. The demo is one deployment of it.</p></a>
+      <a class="card" href="https://personalagentprotocol.org/docs/spec"><div class="num">Protocol</div><h3>Poppy</h3><p>How a personal agent opens a session with a company: poppy.json, the client metadata document and the extensions header.</p></a>
+      <a class="card" href="https://nandaindex.org"><div class="num">Ecosystem</div><h3>NANDA Index</h3><p>Where John's locator resolves. The entry he re-points himself when his card moves.</p></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Reach John · a NANDA Index demo for IETF 127</span>
+    <span><a href="/console">John's console</a></span>
+    <span><a id="merchant-foot" href="https://travel26-production.up.railway.app/">Travel26's desk</a></span>
+    <span><a href="/.well-known/agent-card.json">John's agent card</a></span>
+    <span><a href="https://github.com/Sharathvc23/nanda-reach-demo">Source, MIT</a></span>
+  </div>
+</footer>
+
 <script>
-(function(){
-  const $=(id)=>document.getElementById(id);
-  const preview=(t,max=180)=>{t=String(t).replace(/\s+/g," ").trim(); if(t.length<=max) return t; const cut=t.slice(0,max); const dot=cut.lastIndexOf(". "); if(dot>max*0.5) return cut.slice(0,dot+1); const sp=cut.lastIndexOf(" "); return (sp>0?cut.slice(0,sp):cut)+"…";};
-  const esc=(s)=>String(s??"").replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-  const tokenInput=$("token"); try{tokenInput.value=localStorage.getItem("adminToken")||"";}catch{}
-  try{const hm=location.hash.match(/[#&]token=([^&]+)/); if(hm){tokenInput.value=decodeURIComponent(hm[1]).trim(); localStorage.setItem("adminToken",tokenInput.value); history.replaceState(null,"",location.pathname+location.search);}}catch{}
-  const tokenState=document.createElement("span"); tokenState.style.cssText="font-size:12px;margin-left:6px"; tokenInput.insertAdjacentElement("afterend",tokenState);
-  let tokenTimer=null; async function verifyToken(){const v=tokenInput.value.trim(); if(v!==tokenInput.value) tokenInput.value=v; try{localStorage.setItem("adminToken",v);}catch{} if(!v){tokenState.textContent=""; return;} tokenState.textContent="…"; try{const r=await fetch("/admin/check",{headers:{authorization:"Bearer "+v}}); tokenState.textContent=r.ok?"✓ ok":"✗ rejected"; tokenState.style.color=r.ok?"var(--ok)":"var(--warn)";}catch{tokenState.textContent="?";}}
-  tokenInput.addEventListener("input",()=>{clearTimeout(tokenTimer); tokenTimer=setTimeout(verifyToken,400);}); tokenInput.addEventListener("change",verifyToken); if(tokenInput.value) verifyToken();
-  const headers=(hasBody)=>{const h={}; if(hasBody) h["content-type"]="application/json"; if(tokenInput.value.trim()) h["authorization"]="Bearer "+tokenInput.value.trim(); return h;};
-  const setStatus=(t,err)=>{const el=$("status"); el.textContent=t; el.className="status"+(err?" err":"");};
-  async function api(method,url,body){const res=await fetch(url,{method,headers:headers(body!==undefined),body:body===undefined?undefined:JSON.stringify(body)}); const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data.error||(method+" "+url+" -> "+res.status)); return data;}
-  const seen={}; const arrivedAt={}; const newIds={}; let cfg=null;
-  const dotClass=(id)=>id==="muse"||id==="wajo"?id:id==="none"?"none":"other";
-
-  // Trace lines of the latest send that differ from the previous send are highlighted.
-  function renderTrace(cur, prev){
-    const prevSet=new Set(prev||[]);
-    return '<div class="trace">'+(cur||[]).map((x)=>{const chg=prev&&!prevSet.has(x)&&!/^Index: GET|^  travel26|^  poppy-identity/.test(x); const cls=(/^Route:|^InkBox: sent|^Verification: passed/.test(x)?"hit ":"")+(/^Error|^  finding|^Verification: failed|^Saved-URL merchant: .*(4\d\d|5\d\d|unreachable)/.test(x)?"err ":"")+(chg?"chg":""); return '<div class="'+cls.trim()+'">'+esc(x)+"</div>";}).join("")+"</div>";
-  }
-  function sendCard(d, prev, cur){
-    if(!d) return '<div class="send"><div class="empty">None.</div></div>';
-    const outcome=d.delivered_to?'<span class="chip ok">delivered</span> <span class="dot '+dotClass(d.delivered_to.agent)+'"></span>'+esc(d.delivered_to.agent)+' <span class="k">'+esc(d.delivered_to.address)+'</span>':d.declined?'<span class="chip no">held · declined by card</span>':'<span class="chip no">held</span> <span class="k">'+esc(d.error||"")+'</span>';
-    const naive=d.naive?'<div class="m">saved-URL merchant: '+(d.naive.ok?'<span style="color:var(--ok)">still reaches</span>':'<span style="color:var(--warn)">HTTP '+esc(d.naive.status??"?")+', lost John</span>')+'</div>':'';
-    return '<div class="send'+(cur?" cur":"")+'"><div class="s">'+esc(d.subject)+'</div><div class="m">'+new Date(d.at).toLocaleTimeString()+' · card v'+esc(d.card_version??"?")+''+'</div><div>'+outcome+'</div>'+naive+renderTrace(d.trace, prev?prev.trace:null)+'</div>';
-  }
-  function renderMerchant(m){
-    $("t26link").href=m.url; const byLoc={}; (m.reach||[]).forEach((r)=>byLoc[r.locator]=r);
-    const known=m.known_agents||[];
-    $("known").innerHTML=m.error?'<div class="empty">Merchant unreachable: '+esc(m.error)+'</div>':known.length?known.map((k)=>{const r=k.nanda_locator?byLoc[k.nanda_locator]:null; const reach=r?(r.declined?'<div style="margin-top:4px">Travel reaches now: <span class="dot none"></span><b>nobody</b> <span class="k">· declined by the card ('+esc(r.declined)+')</span></div>':r.target?'<div style="margin-top:4px">Travel reaches now: <span class="dot '+dotClass(r.target.agent)+'"></span><b>'+esc(r.target.name)+'</b> <span class="k">'+esc(r.target.address)+' · card v'+esc(r.card_version)+'</span></div>':''):''; return '<div class="row"><div><strong>'+esc(k.client_name)+'</strong> <span class="chip">user '+esc(k.sub.slice(0,8))+'…</span> '+(k.nanda_locator?'<span class="chip ok">locator held</span>':'<span class="chip no">no locator</span>')+'</div>'+reach+'<div class="k">'+k.sessions+' session(s) · '+k.requests+' request(s) · '+esc(k.context||"")+'</div></div>';}).join(""):'<div class="empty">Nobody yet.</div>';
-    const log=(m.promo_log||[]).filter((d)=>!(d.trace||[]).some((t)=>/^Skipped/.test(t)));
-    $("log").innerHTML=log.length?'<div class="sends">'+(log[1]?'<div><div class="lbl">Previous</div>'+sendCard(log[1],null,false)+'</div>':'<div></div>')+'<div><div class="lbl">Latest</div>'+sendCard(log[0],log[1],true)+'</div></div>':'<div class="empty">None.</div>';
-  }
-  function renderChat(turns){
-    $("chat").innerHTML=turns.length?turns.map((t)=>'<div class="turn '+t.role+'">'+esc(t.text)+(t.steps&&t.steps.length?'<div class="steps">'+t.steps.map((s)=>'<details><summary class="'+(s.ok?"":"bad")+'">'+esc(s.tool)+'</summary><pre>'+esc(JSON.stringify(s.input))+"\n\n"+esc(s.output)+'</pre></details>').join("")+"</div>":"")+"</div>").join(""):'<div class="empty">No messages.</div>';
-    $("chat").scrollTop=$("chat").scrollHeight;
-  }
-  const agentFor=(card,id)=>card.agents.find((a)=>a.id===id);
-  const targetFor=(card,topic)=>{for(const r of card.routing){if(r.match==="*"||r.match===topic){if(r.deliver_to==="none") return {rule:r,agent:null,declined:true}; const a=agentFor(card,r.deliver_to); if(a) return {rule:r,agent:a,declined:false};}} return null;};
-  function renderPipe(card, idx){
-    $("p-locator").innerHTML='<code>'+esc(card.nanda.locator)+'</code>';
-    $("p-index").innerHTML='<strong>'+esc(new URL(card.nanda.index).host)+'</strong>'+(idx&&idx.moved?'<br><span class="pill">card moved · entry updated</span>':'');
-    $("p-version").textContent="v"+card.version;
-    $("p-card").innerHTML='<strong>'+card.agents.length+' agent'+(card.agents.length===1?"":"s")+'</strong>, '+card.routing.length+' rule'+(card.routing.length===1?"":"s")+' · updated '+new Date(card.updated_at).toLocaleTimeString()+'<br><span style="font-size:11.5px">'+esc(card.url.replace(/^https?:\/\/[^/]+/,""))+'</span>';
-    const t=targetFor(card,"travel"); const p=targetFor(card,"promotion");
-    $("p-target").innerHTML=(t?(t.declined?'<span class="dot none"></span> <strong>nobody</strong> (declined)':'<span class="dot '+dotClass(t.agent.id)+'"></span> <strong>'+esc(t.agent.name)+'</strong><br>'+esc(t.agent.inbox.address)):"no rule matches")+(p&&p.declined?'<br><span class="pill bad">promotions declined</span>':'');
-  }
-  function renderCard(card,inboxes){
-    $("cardv").textContent="card v"+card.version+" · "+new Date(card.updated_at).toLocaleTimeString();
-    $("rules").innerHTML='<div class="lbl" style="margin-top:0">Routing</div>'+card.routing.map((r)=>{const a=agentFor(card,r.deliver_to); return '<div>'+(r.match==="*"?"Everything else":"Messages about <b>"+esc(r.match)+"</b>")+' → '+(r.deliver_to==="none"?'<span class="dot none"></span> <b>nobody</b> <span class="note">· declined</span>':'<span class="dot '+dotClass(r.deliver_to)+'"></span> <b>'+esc(a?a.name:r.deliver_to)+'</b>')+'</div>';}).join("");
-    const now=Date.now();
-    $("agents").innerHTML=card.agents.map((a)=>{
-      const topics=card.routing.filter((r)=>r.deliver_to===a.id).map((r)=>r.match==="*"?"everything else":r.match);
-      const box=inboxes[a.id]; let inboxHtml; seen[a.id]=seen[a.id]||new Set(); newIds[a.id]=newIds[a.id]||new Set();
-      if(!box) inboxHtml='<div class="note">Inbox not shown here.</div>';
-      else if(box.error&&!(box.items||[]).length) inboxHtml='<div class="note">'+esc(box.error)+'</div>';
-      else if(!(box.items||[]).length) inboxHtml='<div class="empty">Empty.</div>';
-      else {
-        const fresh=box.items.filter((m)=>!seen[a.id].has(m.id));
-        if(fresh.length&&seen[a.id].size){ arrivedAt[a.id]=now; newIds[a.id]=new Set(fresh.map((m)=>m.id)); }
-        if(arrivedAt[a.id]&&now-arrivedAt[a.id]>25000) newIds[a.id].clear();
-        inboxHtml=box.items.slice(0,3).map((m)=>'<div class="msg'+(newIds[a.id].has(m.id)?" new":"")+'"><div class="s">'+esc(m.subject)+'</div><div class="m">from '+esc(m.from_address)+' · '+new Date(m.created_at).toLocaleTimeString()+'</div><div class="b">'+esc(preview(m.body_text||m.snippet||""))+'</div></div>').join("");
-        box.items.forEach((m)=>seen[a.id].add(m.id));
-      }
-      const hot=arrivedAt[a.id]&&now-arrivedAt[a.id]<25000;
-      return '<div class="agent'+(hot?" arrived":"")+'"><div class="top"><span class="dot '+dotClass(a.id)+'"></span><span class="name">'+esc(a.name)+'</span><span class="chip">'+esc(a.harness)+'</span></div><div class="addr">'+esc(a.inbox.address)+'</div><div class="gets">Gets: <b>'+esc(topics.join(", ")||"nothing routed here")+'</b></div><div class="inbox"><div class="lbl">Inbox</div>'+inboxHtml+'</div></div>';
-    }).join("");
-    $("cardmeta").innerHTML="card <code>"+esc(card.url)+"</code><br>Poppy client_id <code>"+esc(card.poppy.client_id)+"</code>";
-    $("cardraw").textContent=JSON.stringify(card,null,2);
-  }
-  async function refresh(){
-    const [state,m,idx]=await Promise.all([api("GET","/state"),fetch("/merchant/state").then((r)=>r.json()),fetch("/index/status").then((r)=>r.json()).catch(()=>null)]);
-    const ids=state.card.agents.map((a)=>a.id);
-    const boxes=await Promise.all(ids.map((id)=>fetch("/inbox/"+id).then((r)=>r.json()).catch(()=>({items:[],error:"unavailable"}))));
-    const inboxes={}; ids.forEach((id,i)=>inboxes[id]=boxes[i]);
-    renderMerchant(m); renderChat(state.chat); renderPipe(state.card, idx); renderCard(state.card,inboxes);
-  }
-  async function run(label,fn){const bs=document.querySelectorAll("button"); bs.forEach((b)=>b.disabled=true); setStatus(label+"…"); try{const out=await fn(); setStatus(label+" done."+(out?" "+out:"")); await refresh();}catch(e){setStatus(label+" failed: "+e.message,true);}finally{bs.forEach((b)=>b.disabled=false);} for(let i=0;i<4;i++){await new Promise((r)=>setTimeout(r,1500)); await refresh().catch(()=>{});}}
-  const say=(text)=>run("mymuse",async()=>{const r=await api("POST","/chat",{message:text}); $("input").value=""; return r.ok?"Card v"+r.card_version+".":"see the reply.";});
-  const summarize=(r)=>{const d=(r.results||[]).find((x)=>x.delivered_to||x.error)||r.results?.[0]; if(!d) return "nobody to send to"; return d.delivered_to?"Delivered to "+d.delivered_to.agent+" using card v"+d.card_version+".":d.error;};
-  $("form").onsubmit=(e)=>{e.preventDefault(); const t=$("input").value.trim(); if(t) say(t);};
-  document.querySelectorAll("[data-say]").forEach((b)=>b.onclick=()=>say(b.getAttribute("data-say")));
-  $("say-wajo").onclick=()=>say("I've added a second agent on Wajo at "+(cfg?cfg.wajo.address:"")+". Route travel related messages via Wajo instead of Muse.");
-  $("move").onclick=()=>run("Move card",async()=>{const r=await api("POST","/card/move"); return "now at "+r.card_url+"; Index entry updated.";});
-  $("moveback").onclick=()=>run("Move card back",async()=>{const r=await api("POST","/card/move-back"); return "back at "+r.card_url+".";});
-  $("reset").onclick=()=>run("Start over",async()=>{await api("POST","/reset"); await api("POST","/merchant/reset"); return "Card v1, Travel26 forgot everyone.";});
-  $("promo").onclick=()=>run("Travel26 send",async()=>summarize(await api("POST","/merchant/promo",{})));
-  $("promo2").onclick=()=>run("Travel26 send",async()=>summarize(await api("POST","/merchant/promo",{subject:"Travel26: Kyoto in autumn, 6 nights with rail pass",body_text:"Hi John, a follow-up from Travel26. Kyoto in autumn, six nights with a rail pass, is $1,990 this month.\n\nSame locator as before. Your card decided where this landed."})));
-  (async()=>{cfg=await api("GET","/config"); $("brain").textContent=cfg.brain==="llm"?"model · "+cfg.model:"scripted brain"; $("foot").textContent="index "+cfg.index_base_url+" · inkbox "+cfg.inkbox_base_url+" · merchant "+cfg.travel26_url+" · card mcp "+cfg.card_mcp_url; await refresh(); setInterval(refresh,4000);})().catch((e)=>setStatus("Could not load: "+e.message,true));
-})();
+  // The strip under the hero reads the live Index entry and John's card; it never writes anything.
+  (async () => {
+    const live = document.getElementById("live"), text = document.getElementById("live-text");
+    try {
+      const cfg = await fetch("/config").then((r) => r.json()).catch(() => null);
+      if (cfg && cfg.travel26_url) for (const id of ["merchant-top", "merchant-hero", "merchant-status", "merchant-foot"]) document.getElementById(id).href = cfg.travel26_url + "/";
+      const [idx, card] = await Promise.all([fetch("/index/status").then((r) => r.json()), fetch("/cards/john").then((r) => r.json())]);
+      const rule = (card.routing || []).find((r) => r.match === "travel") || (card.routing || []).find((r) => r.match === "*");
+      const agent = rule && (card.agents || []).find((a) => a.id === rule.deliver_to);
+      const goes = !rule ? "nowhere yet" : rule.deliver_to === "none" ? "held (declined)" : agent ? agent.name : rule.deliver_to;
+      const host = idx.registry_url ? new URL(idx.registry_url).host : "unknown";
+      text.innerHTML = "Live now: Index entry <b>" + (idx.status || "unknown") + "</b> at " + host + (idx.moved ? " <b>(card moved)</b>" : "") + " · card <b>v" + card.version + "</b>, " + (card.agents || []).length + " agent(s), " + (card.routing || []).length + " rule(s) · travel goes to <b>" + goes + "</b>";
+    } catch (e) {
+      live.classList.add("off");
+      text.textContent = "Live status unavailable right now; the console and the film still work.";
+    }
+  })();
 </script>
 </body>
 </html>

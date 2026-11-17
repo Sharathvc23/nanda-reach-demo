@@ -22,7 +22,7 @@ const page = await context.newPage();
 const log = (m) => console.log(new Date().toISOString().slice(11, 19), m);
 
 await page.goto(pathToFileURL(resolve("scripts/stage.html")).href);
-await page.evaluate(([l, r]) => window.stage.load(l, r), [john, merchant]);
+await page.evaluate(([l, r]) => window.stage.load(l, r), [`${john}/console`, merchant]);
 await page.evaluate(() => window.stage.title("IETF · NandaIndex demo 2026"));
 const L = page.frameLocator("#lf");
 const R = page.frameLocator("#rf");

@@ -127,3 +127,17 @@ describe("moving the card", () => {
     expect((await fetch(`${mm.publicBaseUrl}/.well-known/agent-card.json`)).status).toBe(200);
   });
 });
+
+describe("pages", () => {
+  it("the root is the front door and the console lives at /console", async () => {
+    const front = await fetch(`${mm.publicBaseUrl}/`);
+    expect(front.status).toBe(200);
+    const frontHtml = await front.text();
+    expect(frontHtml).toMatch(/Open the live console/);
+    expect(frontHtml).toMatch(/demo\/ietf-nandaindex-demo-2026\.mp4/);
+    const console_ = await fetch(`${mm.publicBaseUrl}/console`);
+    expect(console_.status).toBe(200);
+    expect(await console_.text()).toMatch(/id="token"/);
+    expect((await fetch(`${mm.publicBaseUrl}/demo/poster.png`)).status).toBe(200);
+  });
+});

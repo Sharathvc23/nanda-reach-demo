@@ -169,5 +169,7 @@ export async function buildMymuse(config: MymuseConfig): Promise<{ app: FastifyI
   });
 
   await app.register(fastifyStatic, { root: join(here, "..", "..", "public", "mymuse"), prefix: "/" });
+  /** "/" is the front door (film, the five beats, what is stored); the working console lives at /console. */
+  app.get("/console", async (_req, reply) => reply.sendFile("console.html"));
   return { app, store, poppy };
 }

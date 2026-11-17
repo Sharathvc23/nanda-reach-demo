@@ -6,7 +6,7 @@ Version 1 · Draft of 2026-11-15 · Status: proposal, with a running reference i
 
 - Reference implementation and demo: <https://github.com/Sharathvc23/nanda-reach-demo>
 - Slides, IETF 127 Hackathon: [ietfdawn2026.pdf](https://github.com/Sharathvc23/nanda-reach-demo/blob/main/docs/ietfdawn2026.pdf)
-- Live: John's agent <https://mymuse.stellarminds.ai> · the company <https://travel26-production.up.railway.app>
+- Live: John's agent <https://mymuse.stellarminds.ai> (console at `/console`) · the company <https://travel26-production.up.railway.app>
 
 ---
 
